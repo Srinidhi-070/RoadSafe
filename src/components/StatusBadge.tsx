@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type StatusType = 'minor' | 'moderate' | 'severe' | 'processing' | 'completed' | 'pending';
+type StatusType = 'minor' | 'moderate' | 'severe' | 'processing' | 'completed' | 'pending' | 'responded';
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -24,6 +24,8 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
         return 'bg-success/20 text-success border-success/30';
       case 'pending':
         return 'bg-muted text-muted-foreground border-muted/30';
+      case 'responded':
+        return 'bg-primary/20 text-primary border-primary/30';
       default:
         return 'bg-muted text-muted-foreground border-muted/30';
     }
