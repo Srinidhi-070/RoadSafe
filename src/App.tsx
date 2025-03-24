@@ -14,6 +14,7 @@ import ReportDetails from "./pages/ReportDetails";
 import ChatAssistant from "./pages/ChatAssistant";
 import MapScreen from "./pages/MapScreen";
 import ProfileScreen from "./pages/ProfileScreen";
+import EmergencyPage from "./pages/EmergencyPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
                 <Route path="/chat" element={<ChatAssistant />} />
                 <Route path="/map" element={<MapScreen />} />
                 <Route path="/profile" element={<ProfileScreen />} />
+                <Route path="/emergency" element={<EmergencyPage />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
