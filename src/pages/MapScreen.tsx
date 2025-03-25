@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter } from 'lucide-react';
+import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, Shield, Flame } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
-import MapView from '@/components/MapView';
+import MapView, { Location as MapLocation } from '@/components/MapView';
 import BottomNavigation from '@/components/BottomNavigation';
 import { toast } from 'sonner';
 
@@ -14,6 +13,10 @@ interface Location {
   distance: number; // in km
   address: string;
   isOpen: boolean;
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
 }
 
 const MapScreen = () => {
@@ -24,6 +27,11 @@ const MapScreen = () => {
   const [selectedFilters, setSelectedFilters] = useState<string[]>(['hospital', 'ambulance']);
   
   const [locations, setLocations] = useState<Location[]>([]);
+  const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ 
+    lat: 40.7128, 
+    lng: -74.0060  // Default to NYC
+  });
   
   // Simulate loading locations
   useEffect(() => {
@@ -38,7 +46,11 @@ const MapScreen = () => {
           type: 'hospital',
           distance: 1.2,
           address: '123 Main St, Cityville',
-          isOpen: true
+          isOpen: true,
+          coordinates: {
+            lat: 40.7160,
+            lng: -74.0055
+          }
         },
         {
           id: '2',
@@ -46,7 +58,11 @@ const MapScreen = () => {
           type: 'hospital',
           distance: 2.5,
           address: '456 Oak Ave, Cityville',
-          isOpen: true
+          isOpen: true,
+          coordinates: {
+            lat: 40.7110,
+            lng: -74.0090
+          }
         },
         {
           id: '3',
@@ -54,7 +70,11 @@ const MapScreen = () => {
           type: 'ambulance',
           distance: 0.8,
           address: 'Mobile Unit - Currently 0.8km away',
-          isOpen: true
+          isOpen: true,
+          coordinates: {
+            lat: 40.7138,
+            lng: -74.0030
+          }
         },
         {
           id: '4',
@@ -62,7 +82,11 @@ const MapScreen = () => {
           type: 'police',
           distance: 3.1,
           address: '789 Central Blvd, Cityville',
-          isOpen: true
+          isOpen: true,
+          coordinates: {
+            lat: 40.7080,
+            lng: -74.0100
+          }
         },
         {
           id: '5',
@@ -70,24 +94,63 @@ const MapScreen = () => {
           type: 'fire',
           distance: 4.2,
           address: '101 Elm St, Cityville',
-          isOpen: true
+          isOpen: true,
+          coordinates: {
+            lat: 40.7190,
+            lng: -73.9950
+          }
         }
       ];
       
       setLocations(mockLocations);
+      
+      // Convert locations to map markers
+      const mapMarkers: MapLocation[] = mockLocations.map(loc => ({
+        id: loc.id,
+        lat: loc.coordinates.lat,
+        lng: loc.coordinates.lng,
+        type: loc.type,
+        name: loc.name
+      }));
+      
+      // Add user location
+      mapMarkers.push({
+        id: 'user',
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        type: 'user',
+        name: 'Your Location'
+      });
+      
+      setMapLocations(mapMarkers);
       setIsLoading(false);
     };
     
     loadLocations();
-  }, []);
+  }, [userLocation]);
   
   const handleGetCurrentLocation = () => {
     toast.info('Getting your current location...');
     
-    // In a real app, this would use the Geolocation API
-    setTimeout(() => {
-      toast.success('Location updated');
-    }, 1000);
+    // In a real app, we would use the Geolocation API
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newLocation = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(newLocation);
+          toast.success('Location updated');
+        },
+        () => {
+          // Fallback if geolocation fails
+          toast.error('Could not get your location');
+        }
+      );
+    } else {
+      toast.error('Geolocation is not supported by your browser');
+    }
   };
   
   const toggleFilter = (filter: string) => {
@@ -102,6 +165,11 @@ const MapScreen = () => {
     location => 
       selectedFilters.includes(location.type) && 
       (searchQuery === '' || location.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+  
+  // Filter map locations based on selected filters
+  const filteredMapLocations = mapLocations.filter(loc => 
+    loc.type === 'user' || selectedFilters.includes(loc.type as any)
   );
   
   return (
@@ -207,7 +275,10 @@ const MapScreen = () => {
       {/* Map */}
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
         <MapView 
-          className="h-56 rounded-lg overflow-hidden shadow-sm" 
+          className="h-64 rounded-lg overflow-hidden shadow-md border" 
+          locations={filteredMapLocations}
+          centerLocation={userLocation}
+          zoom={13}
         />
       </AnimatedContainer>
       

@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight } from 'lucide-react';
 import ActionCard from '@/components/ActionCard';
@@ -10,6 +9,7 @@ import { useEmergency } from '@/contexts/EmergencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Card, CardContent } from '@/components/ui/card';
+import MapView, { Location as MapLocation } from '@/components/MapView';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -21,6 +21,77 @@ const Index = () => {
   const latestReport = reports.length > 0 
     ? reports.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0]
     : null;
+  
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
+  
+  // Get user location for map
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          });
+        },
+        () => {
+          // Fallback location
+          setUserLocation({ 
+            lat: 40.7128, 
+            lng: -74.0060 
+          });
+        }
+      );
+    }
+  }, []);
+  
+  // Update map locations when user location changes
+  useEffect(() => {
+    if (!userLocation) return;
+    
+    const newLocations: MapLocation[] = [
+      {
+        id: 'user',
+        lat: userLocation.lat,
+        lng: userLocation.lng,
+        type: 'user',
+        name: 'Your Location'
+      }
+    ];
+    
+    // Add nearby services (this would be dynamic in a real app)
+    newLocations.push(
+      {
+        id: 'hospital-1',
+        lat: userLocation.lat + 0.01,
+        lng: userLocation.lng - 0.005,
+        type: 'hospital',
+        name: 'Nearby Hospital'
+      },
+      {
+        id: 'ambulance-1',
+        lat: userLocation.lat - 0.005,
+        lng: userLocation.lng + 0.008,
+        type: 'ambulance',
+        status: 'enroute',
+        name: 'Emergency Response Unit'
+      }
+    );
+    
+    // Add latest accident report if exists
+    if (latestReport) {
+      newLocations.push({
+        id: latestReport.id,
+        lat: latestReport.location.lat,
+        lng: latestReport.location.lng,
+        type: 'accident',
+        name: 'Your Recent Accident'
+      });
+    }
+    
+    setMapLocations(newLocations);
+  }, [userLocation, latestReport]);
 
   const quickActions = [
     {
@@ -116,6 +187,20 @@ const Index = () => {
               <div className="text-sm text-muted-foreground mb-3">
                 {latestReport.timestamp.toLocaleString()}
               </div>
+              
+              {/* Add small map with accident location */}
+              {userLocation && (
+                <div className="mb-3">
+                  <MapView 
+                    className="h-32 mb-2 rounded-md overflow-hidden"
+                    locations={mapLocations}
+                    centerLocation={userLocation}
+                    zoom={11}
+                    interactive={false}
+                  />
+                </div>
+              )}
+              
               <div className="mb-4 text-foreground/90">
                 {latestReport.description || 'No description provided.'}
               </div>
@@ -124,6 +209,32 @@ const Index = () => {
                 onClick={() => navigate(`/report/${latestReport.id}`)}
               >
                 View details <ArrowRight className="ml-1 h-4 w-4" />
+              </button>
+            </CardContent>
+          </Card>
+        </AnimatedContainer>
+      )}
+      
+      {/* Map preview if no latest report */}
+      {!latestReport && userLocation && (
+        <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
+          <Card className="border-none shadow-md">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-lg">Nearby Emergency Services</h3>
+              </div>
+              <MapView 
+                className="h-40 mb-2 rounded-md overflow-hidden"
+                locations={mapLocations}
+                centerLocation={userLocation}
+                zoom={12}
+                interactive={false}
+              />
+              <button 
+                className="flex items-center text-sm text-primary font-medium"
+                onClick={() => navigate('/map')}
+              >
+                View all services <ArrowRight className="ml-1 h-4 w-4" />
               </button>
             </CardContent>
           </Card>

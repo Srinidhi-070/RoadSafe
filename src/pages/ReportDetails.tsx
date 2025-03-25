@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Clock, AlertTriangle, Phone, User, Ambulance } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import StatusBadge from '@/components/StatusBadge';
-import MapView from '@/components/MapView';
+import MapView, { Location as MapLocation } from '@/components/MapView';
 import { useEmergency } from '@/contexts/EmergencyContext';
 import { toast } from 'sonner';
 
@@ -14,6 +13,8 @@ const ReportDetails = () => {
   const { getReportById, getResponsesForReport } = useEmergency();
   
   const [isLoadingMap, setIsLoadingMap] = useState(true);
+  
+  const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
   
   useEffect(() => {
     // Simulate map loading
@@ -26,6 +27,39 @@ const ReportDetails = () => {
   
   const report = id ? getReportById(id) : undefined;
   const responses = id ? getResponsesForReport(id) : [];
+  
+  // Create map locations when report changes
+  useEffect(() => {
+    if (!report) return;
+    
+    const newLocations: MapLocation[] = [
+      {
+        id: report.id,
+        lat: report.location.lat,
+        lng: report.location.lng,
+        type: 'accident',
+        name: 'Accident Location'
+      }
+    ];
+    
+    // Add responder locations if any
+    responses.forEach(response => {
+      if (response.responderInfo) {
+        // This is mock data - in a real app, responders would have real coordinates
+        const offset = Math.random() * 0.01;
+        newLocations.push({
+          id: response.id,
+          lat: report.location.lat + offset,
+          lng: report.location.lng + offset,
+          type: response.responderType,
+          status: response.status,
+          name: response.responderInfo.name
+        });
+      }
+    });
+    
+    setMapLocations(newLocations);
+  }, [report, responses]);
   
   if (!report) {
     return (
@@ -105,21 +139,17 @@ const ReportDetails = () => {
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
         <div className="space-y-2">
           <h2 className="font-medium">Accident Location</h2>
-          <MapView 
-            className={`h-40 ${isLoadingMap ? 'animate-pulse' : ''}`}
-            locations={[
-              {
-                id: report.id,
-                lat: report.location.lat,
-                lng: report.location.lng,
-                type: 'accident'
-              }
-            ]}
-            centerLocation={report.location}
-          />
+          {report && (
+            <MapView 
+              className={`h-56 ${isLoadingMap ? 'animate-pulse' : ''}`}
+              locations={mapLocations}
+              centerLocation={report.location}
+              zoom={14}
+            />
+          )}
           <div className="flex items-center text-sm text-muted-foreground mt-2">
             <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
-            {report.location.address || 'Location coordinates recorded'}
+            {report?.location.address || 'Location coordinates recorded'}
           </div>
         </div>
       </AnimatedContainer>
