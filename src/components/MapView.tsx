@@ -10,7 +10,7 @@ export interface Location {
   lat: number;
   lng: number;
   type: 'accident' | 'ambulance' | 'hospital' | 'user' | 'police' | 'fire';
-  status?: 'enroute' | 'arrived' | 'waiting' | 'dispatched';
+  status?: 'enroute' | 'arrived' | 'waiting' | 'dispatched' | 'completed';
   name?: string;
 }
 

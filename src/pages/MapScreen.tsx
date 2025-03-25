@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, Shield, Flame } from 'lucide-react';
+import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import MapView, { Location as MapLocation } from '@/components/MapView';
 import BottomNavigation from '@/components/BottomNavigation';
@@ -253,7 +254,7 @@ const MapScreen = () => {
                     : 'bg-muted text-muted-foreground'
                 }`}
               >
-                <Shield className="h-3 w-3 mr-1" />
+                <ShieldIcon className="h-3 w-3 mr-1" />
                 Police
               </button>
               <button
@@ -264,7 +265,7 @@ const MapScreen = () => {
                     : 'bg-muted text-muted-foreground'
                 }`}
               >
-                <Flame className="h-3 w-3 mr-1" />
+                <FlameIcon className="h-3 w-3 mr-1" />
                 Fire Dept.
               </button>
             </div>
@@ -318,8 +319,8 @@ const MapScreen = () => {
                   }`}>
                     {location.type === 'hospital' && <Hospital className="h-5 w-5" />}
                     {location.type === 'ambulance' && <Ambulance className="h-5 w-5" />}
-                    {location.type === 'police' && <Shield className="h-5 w-5" />}
-                    {location.type === 'fire' && <Flame className="h-5 w-5" />}
+                    {location.type === 'police' && <ShieldIcon className="h-5 w-5" />}
+                    {location.type === 'fire' && <FlameIcon className="h-5 w-5" />}
                   </div>
                   
                   <div className="ml-3 flex-1 min-w-0">
@@ -361,8 +362,8 @@ const MapScreen = () => {
   );
 };
 
-// Internal components
-const Shield = ({ className }: { className?: string }) => (
+// Internal components - renamed to avoid conflicts with imports
+const ShieldIcon = ({ className }: { className?: string }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
     width="24" 
@@ -379,7 +380,7 @@ const Shield = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const Flame = ({ className }: { className?: string }) => (
+const FlameIcon = ({ className }: { className?: string }) => (
   <svg 
     xmlns="http://www.w3.org/2000/svg" 
     width="24" 
