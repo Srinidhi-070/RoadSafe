@@ -95,12 +95,12 @@ const Index = () => {
         </p>
       </AnimatedContainer>
 
-      {/* Emergency button */}
-      <AnimatedContainer animation="scale-in" delay={100} className="mb-8 flex justify-center">
+      {/* Emergency button - Now much bigger */}
+      <AnimatedContainer animation="scale-in" delay={100} className="mb-10 flex justify-center">
         <EmergencyButton 
           onClick={() => navigate('/emergency')}
-          className="w-24 h-24 text-lg font-bold"
           size="lg"
+          className="w-40 h-40 text-xl font-bold"
         />
       </AnimatedContainer>
 
