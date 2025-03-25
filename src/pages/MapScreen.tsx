@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import MapView, { Location as MapLocation } from '@/components/MapView';
 import BottomNavigation from '@/components/BottomNavigation';
+import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 import { toast } from 'sonner';
 
 interface Location {
@@ -33,6 +33,9 @@ const MapScreen = () => {
     lat: 40.7128, 
     lng: -74.0060  // Default to NYC
   });
+  
+  // Use the ambulance tracking hook
+  const { ambulanceLocations, isTracking, toggleTracking } = useAmbulanceTracking();
   
   // Simulate loading locations
   useEffect(() => {
@@ -67,18 +70,6 @@ const MapScreen = () => {
         },
         {
           id: '3',
-          name: 'Rapid Response Ambulance',
-          type: 'ambulance',
-          distance: 0.8,
-          address: 'Mobile Unit - Currently 0.8km away',
-          isOpen: true,
-          coordinates: {
-            lat: 40.7138,
-            lng: -74.0030
-          }
-        },
-        {
-          id: '4',
           name: 'Downtown Police Station',
           type: 'police',
           distance: 3.1,
@@ -90,7 +81,7 @@ const MapScreen = () => {
           }
         },
         {
-          id: '5',
+          id: '4',
           name: 'Eastside Fire Department',
           type: 'fire',
           distance: 4.2,
@@ -105,8 +96,8 @@ const MapScreen = () => {
       
       setLocations(mockLocations);
       
-      // Convert locations to map markers
-      const mapMarkers: MapLocation[] = mockLocations.map(loc => ({
+      // Convert static locations to map markers
+      const staticMarkers: MapLocation[] = mockLocations.map(loc => ({
         id: loc.id,
         lat: loc.coordinates.lat,
         lng: loc.coordinates.lng,
@@ -115,7 +106,7 @@ const MapScreen = () => {
       }));
       
       // Add user location
-      mapMarkers.push({
+      staticMarkers.push({
         id: 'user',
         lat: userLocation.lat,
         lng: userLocation.lng,
@@ -123,12 +114,25 @@ const MapScreen = () => {
         name: 'Your Location'
       });
       
-      setMapLocations(mapMarkers);
+      setMapLocations(staticMarkers);
       setIsLoading(false);
     };
     
     loadLocations();
   }, [userLocation]);
+  
+  // Update map locations whenever ambulance locations change
+  useEffect(() => {
+    // Get static locations without ambulances
+    const staticLocations = mapLocations.filter(loc => loc.type !== 'ambulance');
+    
+    // Combine with real-time ambulance locations if tracking is enabled
+    if (isTracking && ambulanceLocations.length > 0) {
+      setMapLocations([...staticLocations, ...ambulanceLocations]);
+    } else {
+      setMapLocations(staticLocations);
+    }
+  }, [ambulanceLocations, isTracking]);
   
   const handleGetCurrentLocation = () => {
     toast.info('Getting your current location...');
@@ -187,14 +191,25 @@ const MapScreen = () => {
             </button>
             <h1 className="text-xl font-semibold">Nearby Services</h1>
           </div>
-          <button
-            onClick={() => setFilterOpen(!filterOpen)}
-            className={`p-2 rounded-full transition-colors ${
-              filterOpen ? 'bg-primary/20 text-primary' : 'hover:bg-muted'
-            }`}
-          >
-            <Filter className="h-5 w-5" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={toggleTracking}
+              className={`p-2 rounded-full transition-colors ${
+                isTracking ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'
+              }`}
+              title={isTracking ? "Live tracking on" : "Live tracking off"}
+            >
+              <div className={`h-2 w-2 rounded-full ${isTracking ? 'bg-success animate-pulse' : 'bg-muted-foreground'}`}></div>
+            </button>
+            <button
+              onClick={() => setFilterOpen(!filterOpen)}
+              className={`p-2 rounded-full transition-colors ${
+                filterOpen ? 'bg-primary/20 text-primary' : 'hover:bg-muted'
+              }`}
+            >
+              <Filter className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </AnimatedContainer>
       
@@ -275,19 +290,72 @@ const MapScreen = () => {
       
       {/* Map */}
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
-        <MapView 
-          className="h-64 rounded-lg overflow-hidden shadow-md border" 
-          locations={filteredMapLocations}
-          centerLocation={userLocation}
-          zoom={13}
-        />
+        <div className="relative">
+          <MapView 
+            className="h-64 rounded-lg overflow-hidden shadow-md border" 
+            locations={filteredMapLocations}
+            centerLocation={userLocation}
+            zoom={13}
+          />
+          
+          {isTracking && ambulanceLocations.length > 0 && (
+            <div className="absolute top-2 right-2 bg-background/90 text-xs px-2 py-1 rounded flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+              Live Tracking
+            </div>
+          )}
+        </div>
       </AnimatedContainer>
       
       {/* Locations list */}
       <AnimatedContainer animation="fade-in" delay={300}>
-        <h2 className="font-medium mb-3">Nearby Emergency Services</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-medium">Nearby Emergency Services</h2>
+          {ambulanceLocations.length > 0 && (
+            <span className="text-xs bg-info/10 text-info px-2 py-1 rounded-full flex items-center">
+              <Ambulance className="h-3 w-3 mr-1" />
+              {ambulanceLocations.length} Active Units
+            </span>
+          )}
+        </div>
         
         <div className="space-y-3">
+          {/* Show ambulances at the top of the list when tracking */}
+          {isTracking && ambulanceLocations.length > 0 && (
+            <div className="border-b pb-2 mb-2">
+              <h3 className="text-sm font-medium mb-2 text-info">Active Ambulances</h3>
+              {ambulanceLocations.map((amb, index) => (
+                <AnimatedContainer 
+                  key={amb.id} 
+                  animation="fade-in"
+                  delay={400}
+                  className="bg-info/5 border border-info/20 rounded-lg p-3 mb-2 hover:border-info/40 transition-colors"
+                >
+                  <div className="flex items-start">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 bg-info/10 text-info">
+                      <Ambulance className="h-5 w-5" />
+                    </div>
+                    
+                    <div className="ml-3 flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium truncate">{amb.name}</h3>
+                        <StatusBadge status={amb.status || 'waiting'} />
+                      </div>
+                      <div className="mt-1 flex justify-between items-center">
+                        <span className="text-xs">
+                          {amb.status === 'enroute' ? 'En route to patient' : 
+                           amb.status === 'dispatched' ? 'Dispatched' : 
+                           amb.status === 'arrived' ? 'Arrived at scene' : 
+                           'Waiting for dispatch'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </AnimatedContainer>
+              ))}
+            </div>
+          )}
+          
           {isLoading ? (
             // Loading skeleton
             Array(3).fill(null).map((_, index) => (

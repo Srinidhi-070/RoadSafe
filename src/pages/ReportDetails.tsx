@@ -1,10 +1,12 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, AlertTriangle, Phone, User, Ambulance } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, AlertTriangle, Phone, User, Ambulance, Eye, EyeOff } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import StatusBadge from '@/components/StatusBadge';
 import MapView, { Location as MapLocation } from '@/components/MapView';
 import { useEmergency } from '@/contexts/EmergencyContext';
+import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 import { toast } from 'sonner';
 
 const ReportDetails = () => {
@@ -13,8 +15,15 @@ const ReportDetails = () => {
   const { getReportById, getResponsesForReport } = useEmergency();
   
   const [isLoadingMap, setIsLoadingMap] = useState(true);
-  
   const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
+  
+  // Use the ambulance tracking hook
+  const { 
+    ambulanceLocations, 
+    isTracking, 
+    toggleTracking, 
+    dispatchAmbulanceToLocation 
+  } = useAmbulanceTracking();
   
   useEffect(() => {
     // Simulate map loading
@@ -28,7 +37,18 @@ const ReportDetails = () => {
   const report = id ? getReportById(id) : undefined;
   const responses = id ? getResponsesForReport(id) : [];
   
-  // Create map locations when report changes
+  // Automatically dispatch an ambulance if there's a report but no ambulance assigned
+  useEffect(() => {
+    if (report && responses.length === 0) {
+      // Try to dispatch an ambulance
+      const ambulanceId = dispatchAmbulanceToLocation(report.id, report.location);
+      if (ambulanceId) {
+        toast.success("Ambulance dispatched to your location");
+      }
+    }
+  }, [report, responses.length, dispatchAmbulanceToLocation]);
+  
+  // Create map locations when report or ambulances change
   useEffect(() => {
     if (!report) return;
     
@@ -45,21 +65,21 @@ const ReportDetails = () => {
     // Add responder locations if any
     responses.forEach(response => {
       if (response.responderInfo) {
-        // This is mock data - in a real app, responders would have real coordinates
-        const offset = Math.random() * 0.01;
-        newLocations.push({
-          id: response.id,
-          lat: report.location.lat + offset,
-          lng: report.location.lng + offset,
-          type: response.responderType,
-          status: response.status,
-          name: response.responderInfo.name
-        });
+        // In a real app, responders would have real coordinates
+        // For now, we'll use the simulated ambulance locations
+        // We don't add them here because they come from ambulanceLocations
       }
     });
     
-    setMapLocations(newLocations);
-  }, [report, responses]);
+    // Add real-time ambulance locations if tracking is enabled
+    if (isTracking) {
+      // Filter only ambulances related to this report (in real app)
+      // For now, we'll add all tracked ambulances
+      setMapLocations([...newLocations, ...ambulanceLocations]);
+    } else {
+      setMapLocations(newLocations);
+    }
+  }, [report, responses, ambulanceLocations, isTracking]);
   
   if (!report) {
     return (
@@ -138,14 +158,42 @@ const ReportDetails = () => {
       {/* Map section */}
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
         <div className="space-y-2">
-          <h2 className="font-medium">Accident Location</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="font-medium">Accident Location</h2>
+            <button 
+              onClick={toggleTracking}
+              className="flex items-center text-xs bg-muted px-2 py-1 rounded-full"
+            >
+              {isTracking ? (
+                <>
+                  <Eye className="h-3 w-3 mr-1" />
+                  <span>Live Tracking</span>
+                </>
+              ) : (
+                <>
+                  <EyeOff className="h-3 w-3 mr-1" />
+                  <span>Tracking Off</span>
+                </>
+              )}
+            </button>
+          </div>
+          
           {report && (
-            <MapView 
-              className={`h-56 ${isLoadingMap ? 'animate-pulse' : ''}`}
-              locations={mapLocations}
-              centerLocation={report.location}
-              zoom={14}
-            />
+            <div className="relative">
+              <MapView 
+                className={`h-56 ${isLoadingMap ? 'animate-pulse' : ''}`}
+                locations={mapLocations}
+                centerLocation={report.location}
+                zoom={14}
+              />
+              
+              {isTracking && (
+                <div className="absolute top-2 right-2 bg-background/90 text-xs px-2 py-1 rounded flex items-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+                  Live
+                </div>
+              )}
+            </div>
           )}
           <div className="flex items-center text-sm text-muted-foreground mt-2">
             <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
