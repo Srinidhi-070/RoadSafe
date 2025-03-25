@@ -6,6 +6,7 @@ import ChatBubble from '@/components/ChatBubble';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import { useChatbot } from '@/contexts/ChatbotContext';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 const ChatAssistant = () => {
   const navigate = useNavigate();
@@ -60,31 +61,34 @@ const ChatAssistant = () => {
   };
   
   return (
-    <div className="min-h-screen pt-6 pb-24 px-4 flex flex-col">
+    <div className="min-h-screen pt-6 pb-24 px-4 flex flex-col bg-gradient-to-b from-background to-background/80">
       {/* Header */}
-      <AnimatedContainer className="mb-4 flex-shrink-0">
+      <AnimatedContainer className="mb-6 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <button 
+            <Button 
               onClick={() => navigate('/')}
-              className="mr-4 p-2 rounded-full hover:bg-muted transition-colors"
+              variant="ghost"
+              className="mr-3 rounded-full p-2.5 hover:bg-primary/10"
+              size="icon"
             >
               <ArrowLeft className="h-5 w-5" />
-            </button>
-            <h1 className="text-xl font-semibold">First Aid Assistant</h1>
+            </Button>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">First Aid Assistant</h1>
           </div>
-          <button
+          <Button
             onClick={clearMessages}
-            className="p-2 rounded-full hover:bg-muted transition-colors"
-            aria-label="Clear chat"
+            variant="ghost"
+            className="rounded-full p-2.5 hover:bg-destructive/10 hover:text-destructive"
+            size="icon"
           >
             <Trash2 className="h-5 w-5" />
-          </button>
+          </Button>
         </div>
       </AnimatedContainer>
       
       {/* Chat area */}
-      <div className="flex-1 overflow-y-auto mb-4 space-y-4 scroll-hidden">
+      <div className="flex-1 overflow-y-auto mb-4 space-y-4 scroll-hidden pr-1">
         {messages.map((message) => (
           <ChatBubble
             key={message.id}
@@ -95,7 +99,7 @@ const ChatAssistant = () => {
         ))}
         
         {isProcessing && (
-          <div className="flex items-center space-x-2 text-muted-foreground p-2">
+          <div className="flex items-center space-x-2 text-muted-foreground p-3 bg-primary/5 rounded-xl max-w-[80%]">
             <div className="flex space-x-1">
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }}></div>
               <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '200ms' }}></div>
@@ -109,11 +113,11 @@ const ChatAssistant = () => {
       </div>
       
       {/* Input area */}
-      <div className="sticky bottom-0 left-0 right-0 bg-background pt-2 pb-8">
+      <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pt-3 pb-8 rounded-t-xl shadow-lg">
         <div className="relative flex items-center">
           <button
             onClick={toggleRecording}
-            className={`absolute left-3 p-2 rounded-full ${isRecording ? 'text-emergency' : 'text-muted-foreground'} hover:text-primary transition-colors`}
+            className={`absolute left-4 p-2 rounded-full ${isRecording ? 'text-emergency bg-emergency/10' : 'text-muted-foreground'} hover:text-primary transition-colors`}
             aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
           >
             {isRecording ? (
@@ -130,14 +134,14 @@ const ChatAssistant = () => {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask for first aid assistance..."
-            className="w-full bg-muted border-none rounded-full py-3 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-full bg-muted/70 border-none rounded-full py-3.5 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-inner"
             disabled={isProcessing || isRecording}
           />
           
           <button
             onClick={handleSendMessage}
             disabled={!input.trim() || isProcessing}
-            className="absolute right-3 p-2 rounded-full text-primary hover:bg-primary/10 transition-colors disabled:text-muted-foreground disabled:hover:bg-transparent"
+            className="absolute right-4 p-2 rounded-full text-primary bg-primary/10 hover:bg-primary/20 transition-colors disabled:text-muted-foreground disabled:bg-transparent"
             aria-label="Send message"
           >
             {isProcessing ? (

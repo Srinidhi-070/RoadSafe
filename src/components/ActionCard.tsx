@@ -24,16 +24,16 @@ const ActionCard = ({
     <button
       onClick={onClick}
       className={cn(
-        'w-full p-4 rounded-xl flex items-center gap-4 transition-all duration-300 card-hover border',
-        variant === 'default' && 'bg-card text-card-foreground border-border',
-        variant === 'outline' && 'bg-background/50 text-foreground border-primary/30',
-        variant === 'emergency' && 'bg-emergency/10 text-emergency border-emergency/30',
+        'w-full p-4 rounded-xl flex items-center gap-4 transition-all duration-300 card-hover border-none',
+        variant === 'default' && 'bg-gradient-to-r from-card to-card/95 text-card-foreground shadow-md',
+        variant === 'outline' && 'bg-background/50 text-foreground border-primary/30 shadow-sm',
+        variant === 'emergency' && 'bg-gradient-to-r from-emergency/15 to-emergency/5 text-emergency shadow-md',
         className
       )}
     >
       <div className={cn(
         'p-3 rounded-full flex-shrink-0',
-        variant === 'default' && 'bg-primary/10 text-primary',
+        variant === 'default' && 'bg-primary/15 text-primary',
         variant === 'outline' && 'bg-background text-primary',
         variant === 'emergency' && 'bg-emergency/20 text-emergency',
       )}>

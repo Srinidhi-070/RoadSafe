@@ -38,8 +38,8 @@ const EmergencyButton = ({
     <button
       onClick={handleClick}
       className={cn(
-        'relative overflow-hidden flex items-center justify-center rounded-full font-medium transition-all focus:outline-none focus:ring-2 focus:ring-offset-2',
-        variant === 'default' && 'bg-emergency text-emergency-foreground shadow-lg',
+        'relative overflow-hidden flex items-center justify-center rounded-xl font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-md',
+        variant === 'default' && 'bg-gradient-to-r from-emergency to-emergency/90 text-emergency-foreground shadow-lg',
         variant === 'outline' && 'border-2 border-emergency text-emergency bg-emergency/5',
         variant === 'ghost' && 'bg-transparent text-emergency hover:bg-emergency/10',
         size === 'default' && 'px-6 py-4',
@@ -57,12 +57,12 @@ const EmergencyButton = ({
       {/* Ripple effect */}
       {variant === 'default' && (
         <>
-          <span className="absolute inset-0 z-0 rounded-full overflow-hidden">
+          <span className="absolute inset-0 z-0 rounded-xl overflow-hidden">
             <span className="absolute inset-0 transform transition-transform duration-300 ease-out bg-emergency/20 group-hover:bg-emergency/0"></span>
           </span>
           <span className="absolute inset-0 z-0">
-            <span className="absolute inset-0 rounded-full animate-ripple bg-emergency/30"></span>
-            <span className="absolute inset-0 rounded-full animate-ripple bg-emergency/20 delay-200"></span>
+            <span className="absolute inset-0 rounded-xl animate-ripple bg-emergency/30"></span>
+            <span className="absolute inset-0 rounded-xl animate-ripple bg-emergency/20 delay-200"></span>
           </span>
         </>
       )}
