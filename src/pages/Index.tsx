@@ -27,31 +27,36 @@ const Index = () => {
       title: 'Report Accident',
       description: 'Upload images and get AI analysis',
       icon: <AlertCircle className="h-5 w-5" />,
-      onClick: () => navigate('/report')
+      onClick: () => navigate('/report'),
+      color: 'red'
     },
     {
       title: 'First Aid Assistant',
       description: 'Get emergency medical guidance',
       icon: <MessageCircle className="h-5 w-5" />,
-      onClick: () => navigate('/chat')
+      onClick: () => navigate('/chat'),
+      color: 'blue'
     },
     {
       title: 'Emergency Services',
       description: 'Contact police, ambulance or fire services',
       icon: <Shield className="h-5 w-5" />,
-      onClick: () => navigate('/services')
+      onClick: () => navigate('/services'),
+      color: 'purple'
     },
     {
       title: 'Nearby Hospitals',
       description: 'Find medical facilities near you',
       icon: <MapPin className="h-5 w-5" />,
-      onClick: () => navigate('/map')
+      onClick: () => navigate('/map'),
+      color: 'green'
     },
     {
       title: 'Emergency Contacts',
       description: 'Manage your emergency contacts',
       icon: <Users className="h-5 w-5" />,
-      onClick: () => navigate('/profile')
+      onClick: () => navigate('/profile'),
+      color: 'teal'
     }
   ];
 
@@ -60,7 +65,7 @@ const Index = () => {
       {/* Welcome message */}
       {showWelcome && (
         <AnimatedContainer animation="fade-in" className="mb-6">
-          <Card className="border-none shadow-md overflow-hidden bg-gradient-to-r from-primary/10 to-primary/5">
+          <Card className="border-none shadow-md overflow-hidden bg-gradient-to-r from-purple-500/20 to-blue-500/10">
             <CardContent className="p-4 relative">
               <button 
                 className="absolute top-2 right-2 text-primary" 
@@ -82,7 +87,7 @@ const Index = () => {
 
       {/* Header section */}
       <AnimatedContainer className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
           Hello, {user?.name || 'there'}
         </h1>
         <p className="text-muted-foreground">
@@ -91,17 +96,18 @@ const Index = () => {
       </AnimatedContainer>
 
       {/* Emergency button */}
-      <AnimatedContainer animation="scale-in" delay={100} className="mb-8">
+      <AnimatedContainer animation="scale-in" delay={100} className="mb-8 flex justify-center">
         <EmergencyButton 
           onClick={() => navigate('/emergency')}
-          className="w-full py-5 text-lg font-bold"
+          className="w-24 h-24 text-lg font-bold"
+          size="lg"
         />
       </AnimatedContainer>
 
       {/* Latest report if exists */}
       {latestReport && (
         <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
-          <Card className="border-none shadow-md bg-card">
+          <Card className="border-none shadow-md bg-gradient-to-r from-yellow-500/20 to-orange-500/10">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-lg">Latest Accident Report</h3>
@@ -127,7 +133,7 @@ const Index = () => {
       {/* Quick actions */}
       <div className="space-y-4 mb-8">
         <AnimatedContainer animation="fade-in" delay={300}>
-          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+          <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Quick Actions</h2>
         </AnimatedContainer>
         
         {quickActions.map((action, index) => (
@@ -142,6 +148,7 @@ const Index = () => {
               icon={action.icon}
               onClick={action.onClick}
               className="shadow-md"
+              colorClass={action.color}
             />
           </AnimatedContainer>
         ))}
