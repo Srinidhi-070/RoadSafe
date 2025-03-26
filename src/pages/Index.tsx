@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital } from 'lucide-react';
@@ -37,63 +38,79 @@ const Index = () => {
   // Use the ambulance tracking hook to get ambulance locations
   const { ambulanceLocations } = useAmbulanceTracking(false);
   
-  // Get user location for map
+  // Get user location for map - with a fallback to avoid delay
   useEffect(() => {
+    // Set default location immediately to prevent UI delay
+    const defaultLocation = { 
+      lat: 40.7128, 
+      lng: -74.0060 
+    };
+    
+    setUserLocation(defaultLocation);
+    
+    // Then try to get the actual location
     if (navigator.geolocation) {
+      const timeoutId = setTimeout(() => {
+        if (!userLocation || (userLocation.lat === defaultLocation.lat && userLocation.lng === defaultLocation.lng)) {
+          toast.info("Using approximate location. Precise location still loading...");
+        }
+      }, 1000);
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
+          clearTimeout(timeoutId);
           setUserLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude
           });
         },
         () => {
-          // Fallback location
-          setUserLocation({ 
-            lat: 40.7128, 
-            lng: -74.0060 
-          });
+          clearTimeout(timeoutId);
           toast.error("Could not get your precise location. Using default.");
-        }
+        },
+        { timeout: 5000, enableHighAccuracy: false }
       );
+      
+      return () => clearTimeout(timeoutId);
     }
   }, []);
   
-  // Generate nearby hospitals when user location changes
+  // Generate nearby hospitals when user location changes - do this asynchronously
   useEffect(() => {
     if (!userLocation) return;
     
-    // In a real app, this would be an API call to get nearby hospitals
-    // For demo, generate some random nearby hospitals
-    const generateNearbyHospitals = () => {
-      const hospitals = [
-        {
-          id: 'h1',
-          name: 'City General Hospital',
-          distance: 1.2,
-          lat: userLocation.lat + 0.01,
-          lng: userLocation.lng - 0.005
-        },
-        {
-          id: 'h2',
-          name: 'Mercy Medical Center',
-          distance: 2.5,
-          lat: userLocation.lat - 0.008,
-          lng: userLocation.lng + 0.012
-        },
-        {
-          id: 'h3',
-          name: 'Community Health Hospital',
-          distance: 3.7,
-          lat: userLocation.lat + 0.015,
-          lng: userLocation.lng + 0.008
-        }
-      ];
-      
-      setNearbyHospitals(hospitals);
+    // Generate hospitals with a small timeout to not block rendering
+    const generateHospitalsAsync = () => {
+      setTimeout(() => {
+        const hospitals = [
+          {
+            id: 'h1',
+            name: 'City General Hospital',
+            distance: 1.2,
+            lat: userLocation.lat + 0.01,
+            lng: userLocation.lng - 0.005
+          },
+          {
+            id: 'h2',
+            name: 'Mercy Medical Center',
+            distance: 2.5,
+            lat: userLocation.lat - 0.008,
+            lng: userLocation.lng + 0.012
+          },
+          {
+            id: 'h3',
+            name: 'Community Health Hospital',
+            distance: 3.7,
+            lat: userLocation.lat + 0.015,
+            lng: userLocation.lng + 0.008
+          }
+        ];
+        
+        setNearbyHospitals(hospitals);
+      }, 100);
     };
     
-    generateNearbyHospitals();
+    generateHospitalsAsync();
   }, [userLocation]);
   
   // Update map locations when user location or nearby hospitals change
@@ -111,15 +128,17 @@ const Index = () => {
     ];
     
     // Add nearby hospitals to map
-    nearbyHospitals.forEach(hospital => {
-      newLocations.push({
-        id: hospital.id,
-        lat: hospital.lat,
-        lng: hospital.lng,
-        type: 'hospital',
-        name: hospital.name
+    if (nearbyHospitals.length > 0) {
+      nearbyHospitals.forEach(hospital => {
+        newLocations.push({
+          id: hospital.id,
+          lat: hospital.lat,
+          lng: hospital.lng,
+          type: 'hospital',
+          name: hospital.name
+        });
       });
-    });
+    }
     
     // Add ambulances if available
     if (ambulanceLocations.length > 0) {
@@ -263,29 +282,32 @@ const Index = () => {
       )}
       
       {/* Map preview with nearby hospitals */}
-      {!latestReport && userLocation && (
+      {!latestReport && (
         <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
           <Card className="border-none shadow-md">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-lg">Nearby Emergency Services</h3>
               </div>
-              <MapView 
-                className="h-40 mb-4 rounded-md overflow-hidden"
-                locations={mapLocations}
-                centerLocation={userLocation}
-                zoom={12}
-                interactive={false}
-              />
               
-              {/* Nearby Hospitals List */}
-              {nearbyHospitals.length > 0 && (
-                <div className="space-y-2 mb-3">
-                  <h4 className="text-sm font-medium flex items-center text-primary">
-                    <Hospital className="h-4 w-4 mr-1" /> Nearby Hospitals
-                  </h4>
-                  <div className="space-y-2">
-                    {nearbyHospitals.map(hospital => (
+              {userLocation && (
+                <MapView 
+                  className="h-40 mb-4 rounded-md overflow-hidden"
+                  locations={mapLocations}
+                  centerLocation={userLocation}
+                  zoom={12}
+                  interactive={false}
+                />
+              )}
+              
+              {/* Nearby Hospitals List - Load with minimal delay */}
+              <div className="space-y-2 mb-3">
+                <h4 className="text-sm font-medium flex items-center text-primary">
+                  <Hospital className="h-4 w-4 mr-1" /> Nearby Hospitals
+                </h4>
+                <div className="space-y-2">
+                  {nearbyHospitals.length > 0 ? (
+                    nearbyHospitals.map(hospital => (
                       <div 
                         key={hospital.id} 
                         className="flex items-center justify-between p-2 bg-card border rounded-md hover:bg-muted/50 transition-colors"
@@ -306,10 +328,14 @@ const Index = () => {
                           Directions <ArrowRight className="ml-1 h-3 w-3" />
                         </button>
                       </div>
-                    ))}
-                  </div>
+                    ))
+                  ) : (
+                    <div className="p-3 bg-muted rounded-md text-center">
+                      <p className="text-sm text-muted-foreground">Loading nearby hospitals...</p>
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
               
               <button 
                 className="flex items-center text-sm text-primary font-medium"
