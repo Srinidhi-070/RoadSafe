@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import MapView, { Location as MapLocation } from '@/components/MapView';
 import BottomNavigation from '@/components/BottomNavigation';
+import StatusBadge from '@/components/StatusBadge';
 import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 import { toast } from 'sonner';
 
