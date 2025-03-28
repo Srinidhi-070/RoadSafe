@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital } from 'lucide-react';
@@ -34,8 +33,9 @@ const Index = () => {
     lat: number;
     lng: number;
   }[]>([]);
+  const [isLoadingHospitals, setIsLoadingHospitals] = useState(true);
   
-  // Use the ambulance tracking hook to get ambulance locations
+  // Use the ambulance tracking hook to get ambulance locations - but don't start tracking
   const { ambulanceLocations } = useAmbulanceTracking(false);
   
   // Get user location for map - with a fallback to avoid delay
@@ -48,70 +48,63 @@ const Index = () => {
     
     setUserLocation(defaultLocation);
     
+    // Generate default hospitals immediately with the default location
+    generateHospitalsForLocation(defaultLocation);
+    
     // Then try to get the actual location
     if (navigator.geolocation) {
-      const timeoutId = setTimeout(() => {
-        if (!userLocation || (userLocation.lat === defaultLocation.lat && userLocation.lng === defaultLocation.lng)) {
-          toast.info("Using approximate location. Precise location still loading...");
-        }
-      }, 1000);
-      
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          clearTimeout(timeoutId);
-          setUserLocation({
+          const newLocation = {
             lat: position.coords.latitude,
             lng: position.coords.longitude
-          });
+          };
+          setUserLocation(newLocation);
+          // Generate new hospitals with actual location
+          generateHospitalsForLocation(newLocation);
         },
         () => {
-          clearTimeout(timeoutId);
+          // On error, ensure hospitals are loaded with default location
+          setIsLoadingHospitals(false);
           toast.error("Could not get your precise location. Using default.");
         },
-        { timeout: 5000, enableHighAccuracy: false }
+        { timeout: 3000, enableHighAccuracy: false } // Shorter timeout
       );
-      
-      return () => clearTimeout(timeoutId);
     }
   }, []);
   
-  // Generate nearby hospitals when user location changes - do this asynchronously
-  useEffect(() => {
-    if (!userLocation) return;
+  // Generate hospitals for a given location
+  const generateHospitalsForLocation = (location: { lat: number, lng: number }) => {
+    setIsLoadingHospitals(true);
     
-    // Generate hospitals with a small timeout to not block rendering
-    const generateHospitalsAsync = () => {
-      setTimeout(() => {
-        const hospitals = [
-          {
-            id: 'h1',
-            name: 'City General Hospital',
-            distance: 1.2,
-            lat: userLocation.lat + 0.01,
-            lng: userLocation.lng - 0.005
-          },
-          {
-            id: 'h2',
-            name: 'Mercy Medical Center',
-            distance: 2.5,
-            lat: userLocation.lat - 0.008,
-            lng: userLocation.lng + 0.012
-          },
-          {
-            id: 'h3',
-            name: 'Community Health Hospital',
-            distance: 3.7,
-            lat: userLocation.lat + 0.015,
-            lng: userLocation.lng + 0.008
-          }
-        ];
-        
-        setNearbyHospitals(hospitals);
-      }, 100);
-    };
+    // Generate hospitals immediately
+    const hospitals = [
+      {
+        id: 'h1',
+        name: 'City General Hospital',
+        distance: 1.2,
+        lat: location.lat + 0.01,
+        lng: location.lng - 0.005
+      },
+      {
+        id: 'h2',
+        name: 'Mercy Medical Center',
+        distance: 2.5,
+        lat: location.lat - 0.008,
+        lng: location.lng + 0.012
+      },
+      {
+        id: 'h3',
+        name: 'Community Health Hospital',
+        distance: 3.7,
+        lat: location.lat + 0.015,
+        lng: location.lng + 0.008
+      }
+    ];
     
-    generateHospitalsAsync();
-  }, [userLocation]);
+    setNearbyHospitals(hospitals);
+    setIsLoadingHospitals(false);
+  };
   
   // Update map locations when user location or nearby hospitals change
   useEffect(() => {
@@ -254,7 +247,7 @@ const Index = () => {
                 {latestReport.timestamp.toLocaleString()}
               </div>
               
-              {/* Add small map with accident location */}
+              {/* Add small map with accident location - use lazy loading */}
               {userLocation && (
                 <div className="mb-3">
                   <MapView 
@@ -263,6 +256,7 @@ const Index = () => {
                     centerLocation={userLocation}
                     zoom={11}
                     interactive={false}
+                    lazy={true} // Enable lazy loading
                   />
                 </div>
               )}
@@ -297,6 +291,7 @@ const Index = () => {
                   centerLocation={userLocation}
                   zoom={12}
                   interactive={false}
+                  lazy={true} // Enable lazy loading
                 />
               )}
               
@@ -306,7 +301,7 @@ const Index = () => {
                   <Hospital className="h-4 w-4 mr-1" /> Nearby Hospitals
                 </h4>
                 <div className="space-y-2">
-                  {nearbyHospitals.length > 0 ? (
+                  {!isLoadingHospitals && nearbyHospitals.length > 0 ? (
                     nearbyHospitals.map(hospital => (
                       <div 
                         key={hospital.id} 
@@ -331,7 +326,9 @@ const Index = () => {
                     ))
                   ) : (
                     <div className="p-3 bg-muted rounded-md text-center">
-                      <p className="text-sm text-muted-foreground">Loading nearby hospitals...</p>
+                      <p className="text-sm text-muted-foreground">
+                        {isLoadingHospitals ? "Finding nearby hospitals..." : "No hospitals found nearby"}
+                      </p>
                     </div>
                   )}
                 </div>

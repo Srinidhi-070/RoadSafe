@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter } from 'lucide-react';
@@ -39,10 +38,11 @@ const MapScreen = () => {
   // Use the ambulance tracking hook
   const { ambulanceLocations, isTracking, toggleTracking } = useAmbulanceTracking();
   
-  // Simulate loading locations
+  // Simulate loading locations - optimized to be faster
   useEffect(() => {
     const loadLocations = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Reduced timeout for faster loading
+      await new Promise(resolve => setTimeout(resolve, 500));
       
       // Mock data for demo
       const mockLocations: Location[] = [
@@ -153,7 +153,8 @@ const MapScreen = () => {
         () => {
           // Fallback if geolocation fails
           toast.error('Could not get your location');
-        }
+        },
+        { timeout: 3000, enableHighAccuracy: false } // Reduced timeout
       );
     } else {
       toast.error('Geolocation is not supported by your browser');
@@ -290,7 +291,7 @@ const MapScreen = () => {
         </AnimatedContainer>
       )}
       
-      {/* Map */}
+      {/* Map - with optimized loading */}
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
         <div className="relative">
           <MapView 

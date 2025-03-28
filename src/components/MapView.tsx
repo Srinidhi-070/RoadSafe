@@ -20,6 +20,7 @@ interface MapViewProps {
   centerLocation?: { lat: number; lng: number };
   zoom?: number;
   interactive?: boolean;
+  lazy?: boolean; // New prop to control lazy loading
 }
 
 // You would typically store this in environment variables
@@ -31,7 +32,8 @@ const MapView: React.FC<MapViewProps> = ({
   locations = [], 
   centerLocation = { lat: 40.7128, lng: -74.0060 }, // Default to NYC
   zoom = 12,
-  interactive = true
+  interactive = true,
+  lazy = false // Default to eager loading
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -39,26 +41,53 @@ const MapView: React.FC<MapViewProps> = ({
   const [isMapLoaded, setIsMapLoaded] = useState(false);
   const [userToken, setUserToken] = useState<string>(MAPBOX_TOKEN);
   const [showTokenInput, setShowTokenInput] = useState<boolean>(!MAPBOX_TOKEN);
+  const [shouldInitialize, setShouldInitialize] = useState(!lazy);
+  const observer = useRef<IntersectionObserver | null>(null);
 
-  // Initialize map when the component mounts
+  // Set up intersection observer for lazy loading
   useEffect(() => {
-    if (!mapContainer.current || !userToken) return;
+    if (!lazy || shouldInitialize) return;
+    
+    observer.current = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setShouldInitialize(true);
+        observer.current?.disconnect();
+      }
+    }, { threshold: 0.1 });
+    
+    if (mapContainer.current) {
+      observer.current.observe(mapContainer.current);
+    }
+    
+    return () => {
+      observer.current?.disconnect();
+    };
+  }, [lazy, shouldInitialize]);
+
+  // Initialize map when the component mounts and shouldInitialize is true
+  useEffect(() => {
+    if (!mapContainer.current || !userToken || !shouldInitialize) return;
 
     mapboxgl.accessToken = userToken;
     
     try {
+      // Use a lighter style for faster loading
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v11',
+        style: 'mapbox://styles/mapbox/light-v11', // Lighter style loads faster
         center: [centerLocation.lng, centerLocation.lat],
         zoom: zoom,
         interactive: interactive,
+        attributionControl: false, // Disable attribution for cleaner look
+        fadeDuration: 0, // Remove fade animations for faster rendering
       });
 
       // Add navigation controls if interactive
       if (interactive) {
         map.current.addControl(
-          new mapboxgl.NavigationControl(),
+          new mapboxgl.NavigationControl({
+            showCompass: false, // Hide compass for simpler controls
+          }),
           'top-right'
         );
       }
@@ -78,7 +107,7 @@ const MapView: React.FC<MapViewProps> = ({
       console.error('Error initializing Mapbox map:', error);
       setShowTokenInput(true);
     }
-  }, [centerLocation.lat, centerLocation.lng, zoom, interactive, userToken]);
+  }, [centerLocation.lat, centerLocation.lng, zoom, interactive, userToken, shouldInitialize]);
 
   // Handle markers whenever locations change or map loads
   useEffect(() => {
@@ -87,6 +116,9 @@ const MapView: React.FC<MapViewProps> = ({
     // Clear any existing markers
     markersRef.current.forEach(marker => marker.remove());
     markersRef.current = [];
+
+    // Skip adding markers if there are none to reduce operations
+    if (locations.length === 0) return;
 
     // Add new markers for each location
     locations.forEach(location => {
@@ -165,7 +197,7 @@ const MapView: React.FC<MapViewProps> = ({
       // Create popup with information if name exists
       let popup;
       if (location.name) {
-        popup = new mapboxgl.Popup({ offset: 25 })
+        popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
           .setHTML(`<strong>${location.name}</strong>${location.status ? `<br><span>${location.status}</span>` : ''}`);
       }
       
@@ -187,7 +219,8 @@ const MapView: React.FC<MapViewProps> = ({
       
       map.current.fitBounds(bounds, {
         padding: 50,
-        maxZoom: 14
+        maxZoom: 14,
+        duration: 0 // Remove animation for faster rendering
       });
     }
   }, [locations, isMapLoaded]);
@@ -223,12 +256,18 @@ const MapView: React.FC<MapViewProps> = ({
       
       <div ref={mapContainer} className="w-full h-full" />
       
-      {!isMapLoaded && !showTokenInput && (
+      {!isMapLoaded && !showTokenInput && shouldInitialize && (
         <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center">
           <div className="flex items-center space-x-2">
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
             <span className="text-sm">Loading map...</span>
           </div>
+        </div>
+      )}
+      
+      {!shouldInitialize && lazy && (
+        <div className="absolute inset-0 bg-muted flex items-center justify-center">
+          <div className="text-sm text-muted-foreground">Map will load when scrolled into view</div>
         </div>
       )}
     </div>
