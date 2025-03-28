@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital } from 'lucide-react';
@@ -26,14 +27,6 @@ const Index = () => {
   
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
-  const [nearbyHospitals, setNearbyHospitals] = useState<{
-    id: string;
-    name: string;
-    distance: number;
-    lat: number;
-    lng: number;
-  }[]>([]);
-  const [isLoadingHospitals, setIsLoadingHospitals] = useState(true);
   
   // Use the ambulance tracking hook to get ambulance locations - but don't start tracking
   const { ambulanceLocations } = useAmbulanceTracking(false);
@@ -48,9 +41,6 @@ const Index = () => {
     
     setUserLocation(defaultLocation);
     
-    // Generate default hospitals immediately with the default location
-    generateHospitalsForLocation(defaultLocation);
-    
     // Then try to get the actual location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -60,12 +50,8 @@ const Index = () => {
             lng: position.coords.longitude
           };
           setUserLocation(newLocation);
-          // Generate new hospitals with actual location
-          generateHospitalsForLocation(newLocation);
         },
         () => {
-          // On error, ensure hospitals are loaded with default location
-          setIsLoadingHospitals(false);
           toast.error("Could not get your precise location. Using default.");
         },
         { timeout: 3000, enableHighAccuracy: false } // Shorter timeout
@@ -73,40 +59,8 @@ const Index = () => {
     }
   }, []);
   
-  // Generate hospitals for a given location
-  const generateHospitalsForLocation = (location: { lat: number, lng: number }) => {
-    setIsLoadingHospitals(true);
-    
-    // Generate hospitals immediately
-    const hospitals = [
-      {
-        id: 'h1',
-        name: 'City General Hospital',
-        distance: 1.2,
-        lat: location.lat + 0.01,
-        lng: location.lng - 0.005
-      },
-      {
-        id: 'h2',
-        name: 'Mercy Medical Center',
-        distance: 2.5,
-        lat: location.lat - 0.008,
-        lng: location.lng + 0.012
-      },
-      {
-        id: 'h3',
-        name: 'Community Health Hospital',
-        distance: 3.7,
-        lat: location.lat + 0.015,
-        lng: location.lng + 0.008
-      }
-    ];
-    
-    setNearbyHospitals(hospitals);
-    setIsLoadingHospitals(false);
-  };
   
-  // Update map locations when user location or nearby hospitals change
+  // Update map locations when user location changes
   useEffect(() => {
     if (!userLocation) return;
     
@@ -119,19 +73,6 @@ const Index = () => {
         name: 'Your Location'
       }
     ];
-    
-    // Add nearby hospitals to map
-    if (nearbyHospitals.length > 0) {
-      nearbyHospitals.forEach(hospital => {
-        newLocations.push({
-          id: hospital.id,
-          lat: hospital.lat,
-          lng: hospital.lng,
-          type: 'hospital',
-          name: hospital.name
-        });
-      });
-    }
     
     // Add ambulances if available
     if (ambulanceLocations.length > 0) {
@@ -150,7 +91,7 @@ const Index = () => {
     }
     
     setMapLocations(newLocations);
-  }, [userLocation, nearbyHospitals, ambulanceLocations, latestReport]);
+  }, [userLocation, ambulanceLocations, latestReport]);
 
   const quickActions = [
     {
@@ -269,76 +210,6 @@ const Index = () => {
                 onClick={() => navigate(`/report/${latestReport.id}`)}
               >
                 View details <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </CardContent>
-          </Card>
-        </AnimatedContainer>
-      )}
-      
-      {/* Map preview with nearby hospitals */}
-      {!latestReport && (
-        <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
-          <Card className="border-none shadow-md">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-lg">Nearby Emergency Services</h3>
-              </div>
-              
-              {userLocation && (
-                <MapView 
-                  className="h-40 mb-4 rounded-md overflow-hidden"
-                  locations={mapLocations}
-                  centerLocation={userLocation}
-                  zoom={12}
-                  interactive={false}
-                  lazy={true} // Enable lazy loading
-                />
-              )}
-              
-              {/* Nearby Hospitals List - Load with minimal delay */}
-              <div className="space-y-2 mb-3">
-                <h4 className="text-sm font-medium flex items-center text-primary">
-                  <Hospital className="h-4 w-4 mr-1" /> Nearby Hospitals
-                </h4>
-                <div className="space-y-2">
-                  {!isLoadingHospitals && nearbyHospitals.length > 0 ? (
-                    nearbyHospitals.map(hospital => (
-                      <div 
-                        key={hospital.id} 
-                        className="flex items-center justify-between p-2 bg-card border rounded-md hover:bg-muted/50 transition-colors"
-                      >
-                        <div className="flex items-center">
-                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center mr-3">
-                            <Hospital className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{hospital.name}</p>
-                            <p className="text-xs text-muted-foreground">{hospital.distance.toFixed(1)} km away</p>
-                          </div>
-                        </div>
-                        <button 
-                          className="text-xs text-primary flex items-center"
-                          onClick={() => navigate('/map')}
-                        >
-                          Directions <ArrowRight className="ml-1 h-3 w-3" />
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-3 bg-muted rounded-md text-center">
-                      <p className="text-sm text-muted-foreground">
-                        {isLoadingHospitals ? "Finding nearby hospitals..." : "No hospitals found nearby"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <button 
-                className="flex items-center text-sm text-primary font-medium"
-                onClick={() => navigate('/map')}
-              >
-                View all services <ArrowRight className="ml-1 h-4 w-4" />
               </button>
             </CardContent>
           </Card>
