@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital } from 'lucide-react';
@@ -206,7 +207,7 @@ const Index = () => {
                   <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
               </button>
-              <h2 className="font-semibold text-primary mb-1">Welcome to SmartCrash Assist</h2>
+              <h2 className="font-semibold text-primary mb-1">Welcome to RoadSafe</h2>
               <p className="text-sm text-primary/80">
                 Your AI-powered companion for emergency situations. Report accidents, get first aid guidance, and connect to emergency services.
               </p>
@@ -215,10 +216,10 @@ const Index = () => {
         </AnimatedContainer>
       )}
 
-      {/* Header section */}
+      {/* Header section with new gradient title */}
       <AnimatedContainer className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-          Hello, {user?.name || 'there'}
+        <h1 className="text-4xl font-bold mb-2 font-poppins bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+          RoadSafe
         </h1>
         <p className="text-muted-foreground">
           Smart emergency assistance at your fingertips
