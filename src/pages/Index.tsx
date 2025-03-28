@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital } from 'lucide-react';
@@ -216,9 +215,9 @@ const Index = () => {
         </AnimatedContainer>
       )}
 
-      {/* Header section with new gradient title */}
+      {/* Header section with multi-color gradient */}
       <AnimatedContainer className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 font-poppins bg-gradient-to-r from-blue-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold mb-2 font-poppins bg-gradient-to-r from-blue-500 via-purple-600 to-pink-500 bg-clip-text text-transparent">
           RoadSafe
         </h1>
         <p className="text-muted-foreground">
