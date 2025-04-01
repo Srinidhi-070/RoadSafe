@@ -1,7 +1,6 @@
 
-import React, { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
-import 'mapbox-gl/dist/mapbox-gl.css';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 
@@ -20,12 +19,11 @@ interface MapViewProps {
   centerLocation?: { lat: number; lng: number };
   zoom?: number;
   interactive?: boolean;
-  lazy?: boolean; // New prop to control lazy loading
+  lazy?: boolean;
 }
 
-// You would typically store this in environment variables
-// For demonstration purposes we'll use a temporary token input field
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibG92YWJsZS1kZW1vIiwiYSI6ImNsbnp5bDR5dzAyYTMyaXBiaWkwNDM2cW8ifQ.Jm0J_Ve5RlZIl_q24Q8JKg';
+// Default Google Maps API key - users can provide their own
+const GOOGLE_MAPS_API_KEY = '';
 
 const MapView: React.FC<MapViewProps> = ({ 
   className, 
@@ -33,15 +31,14 @@ const MapView: React.FC<MapViewProps> = ({
   centerLocation = { lat: 40.7128, lng: -74.0060 }, // Default to NYC
   zoom = 12,
   interactive = true,
-  lazy = false // Default to eager loading
+  lazy = false 
 }) => {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markersRef = useRef<mapboxgl.Marker[]>([]);
-  const [isMapLoaded, setIsMapLoaded] = useState(false);
-  const [userToken, setUserToken] = useState<string>(MAPBOX_TOKEN);
-  const [showTokenInput, setShowTokenInput] = useState<boolean>(!MAPBOX_TOKEN);
+  const [userApiKey, setUserApiKey] = useState<string>(GOOGLE_MAPS_API_KEY);
+  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(!GOOGLE_MAPS_API_KEY);
+  const [selectedMarker, setSelectedMarker] = useState<Location | null>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const [shouldInitialize, setShouldInitialize] = useState(!lazy);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
   const observer = useRef<IntersectionObserver | null>(null);
 
   // Set up intersection observer for lazy loading
@@ -55,8 +52,8 @@ const MapView: React.FC<MapViewProps> = ({
       }
     }, { threshold: 0.1 });
     
-    if (mapContainer.current) {
-      observer.current.observe(mapContainer.current);
+    if (mapContainerRef.current) {
+      observer.current.observe(mapContainerRef.current);
     }
     
     return () => {
@@ -64,212 +61,189 @@ const MapView: React.FC<MapViewProps> = ({
     };
   }, [lazy, shouldInitialize]);
 
-  // Initialize map when the component mounts and shouldInitialize is true
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: userApiKey,
+  });
+
+  const onLoad = useCallback((map: google.maps.Map) => {
+    mapRef.current = map;
+  }, []);
+
+  const onUnmount = useCallback(() => {
+    mapRef.current = null;
+  }, []);
+
+  // Fit bounds to include all markers
   useEffect(() => {
-    if (!mapContainer.current || !userToken || !shouldInitialize) return;
-
-    mapboxgl.accessToken = userToken;
-    
-    try {
-      // Use a lighter style for faster loading
-      map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/light-v11', // Lighter style loads faster
-        center: [centerLocation.lng, centerLocation.lat],
-        zoom: zoom,
-        interactive: interactive,
-        attributionControl: false, // Disable attribution for cleaner look
-        fadeDuration: 0, // Remove fade animations for faster rendering
-      });
-
-      // Add navigation controls if interactive
-      if (interactive) {
-        map.current.addControl(
-          new mapboxgl.NavigationControl({
-            showCompass: false, // Hide compass for simpler controls
-          }),
-          'top-right'
-        );
-      }
-
-      map.current.on('load', () => {
-        setIsMapLoaded(true);
-      });
-
-      // Clean up on unmount
-      return () => {
-        if (map.current) {
-          map.current.remove();
-          map.current = null;
-        }
-      };
-    } catch (error) {
-      console.error('Error initializing Mapbox map:', error);
-      setShowTokenInput(true);
-    }
-  }, [centerLocation.lat, centerLocation.lng, zoom, interactive, userToken, shouldInitialize]);
-
-  // Handle markers whenever locations change or map loads
-  useEffect(() => {
-    if (!map.current || !isMapLoaded) return;
-
-    // Clear any existing markers
-    markersRef.current.forEach(marker => marker.remove());
-    markersRef.current = [];
-
-    // Skip adding markers if there are none to reduce operations
-    if (locations.length === 0) return;
-
-    // Add new markers for each location
-    locations.forEach(location => {
-      // Create custom element for marker
-      const el = document.createElement('div');
-      el.className = 'marker';
-      
-      // Style based on location type
-      el.style.width = '25px';
-      el.style.height = '25px';
-      el.style.borderRadius = '50%';
-      el.style.display = 'flex';
-      el.style.justifyContent = 'center';
-      el.style.alignItems = 'center';
-      
-      // Set background color based on type
-      switch (location.type) {
-        case 'accident':
-          el.style.backgroundColor = 'rgba(239, 68, 68, 0.9)'; // Red
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
-          break;
-        case 'ambulance':
-          el.style.backgroundColor = 'rgba(59, 130, 246, 0.9)'; // Blue
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2" ry="2"></rect><path d="M17 11h-1v1h1"></path><path d="M11 11v-3h3"></path><path d="M6 11h.01"></path><path d="M22 11h.01"></path></svg>`;
-          break;
-        case 'hospital':
-          el.style.backgroundColor = 'rgba(16, 185, 129, 0.9)'; // Green
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`;
-          break;
-        case 'police':
-          el.style.backgroundColor = 'rgba(79, 70, 229, 0.9)'; // Indigo
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`;
-          break;
-        case 'fire':
-          el.style.backgroundColor = 'rgba(245, 158, 11, 0.9)'; // Amber
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>`;
-          break;
-        case 'user':
-        default:
-          el.style.backgroundColor = 'rgba(139, 92, 246, 0.9)'; // Purple
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="10"></circle></svg>`;
-      }
-      
-      // Add pulse effect if status is active
-      if (location.status === 'enroute' || location.status === 'dispatched') {
-        const pulse = document.createElement('div');
-        pulse.className = 'pulse';
-        pulse.style.position = 'absolute';
-        pulse.style.width = '35px';
-        pulse.style.height = '35px';
-        pulse.style.borderRadius = '50%';
-        pulse.style.backgroundColor = el.style.backgroundColor.replace('0.9', '0.4');
-        pulse.style.animation = 'pulse 1.5s infinite';
-        el.appendChild(pulse);
-        
-        // Add keyframes for pulse animation
-        if (!document.getElementById('pulse-keyframes')) {
-          const style = document.createElement('style');
-          style.id = 'pulse-keyframes';
-          style.innerHTML = `
-            @keyframes pulse {
-              0% {
-                transform: scale(0.5);
-                opacity: 1;
-              }
-              100% {
-                transform: scale(1.5);
-                opacity: 0;
-              }
-            }
-          `;
-          document.head.appendChild(style);
-        }
-      }
-      
-      // Create popup with information if name exists
-      let popup;
-      if (location.name) {
-        popup = new mapboxgl.Popup({ offset: 25, closeButton: false })
-          .setHTML(`<strong>${location.name}</strong>${location.status ? `<br><span>${location.status}</span>` : ''}`);
-      }
-      
-      // Create and add the marker
-      const marker = new mapboxgl.Marker(el)
-        .setLngLat([location.lng, location.lat])
-        .setPopup(popup ? popup : undefined)
-        .addTo(map.current!);
-        
-      markersRef.current.push(marker);
-    });
-    
-    // Adjust map view to fit all markers if there are any
-    if (locations.length > 1 && map.current) {
-      const bounds = new mapboxgl.LngLatBounds();
+    if (mapRef.current && locations.length > 1) {
+      const bounds = new google.maps.LatLngBounds();
       locations.forEach(location => {
-        bounds.extend([location.lng, location.lat]);
+        bounds.extend(new google.maps.LatLng(location.lat, location.lng));
       });
-      
-      map.current.fitBounds(bounds, {
-        padding: 50,
-        maxZoom: 14,
-        duration: 0 // Remove animation for faster rendering
-      });
+      mapRef.current.fitBounds(bounds, 50); // 50px padding
     }
-  }, [locations, isMapLoaded]);
+  }, [locations, isLoaded]);
+
+  // Get marker icon based on location type
+  const getMarkerIcon = (locationType: string, status?: string) => {
+    const isActive = status === 'enroute' || status === 'dispatched';
+    
+    // Define SVG icons and colors based on type
+    let fillColor = '#3B82F6'; // Default blue
+    let icon = null;
+    
+    switch (locationType) {
+      case 'accident':
+        fillColor = '#EF4444'; // Red
+        break;
+      case 'ambulance':
+        fillColor = '#3B82F6'; // Blue
+        break;
+      case 'hospital':
+        fillColor = '#10B981'; // Green
+        break;
+      case 'police':
+        fillColor = '#4F46E5'; // Indigo
+        break;
+      case 'fire':
+        fillColor = '#F59E0B'; // Amber
+        break;
+      case 'user':
+        fillColor = '#8B5CF6'; // Purple
+        break;
+      default:
+        fillColor = '#3B82F6'; // Blue
+    }
+    
+    return {
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: fillColor,
+      fillOpacity: 0.9,
+      strokeWeight: 1.5,
+      strokeColor: 'white',
+      scale: 9,
+      labelOrigin: new google.maps.Point(0, -2)
+    };
+  };
+
+  // Handle click on marker
+  const handleMarkerClick = (location: Location) => {
+    setSelectedMarker(location);
+  };
+
+  // Close info window
+  const handleInfoWindowClose = () => {
+    setSelectedMarker(null);
+  };
+
+  // If API key is set but map not loaded yet
+  const renderLoadingState = () => (
+    <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center">
+      <div className="flex items-center space-x-2">
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <span className="text-sm">Loading map...</span>
+      </div>
+    </div>
+  );
+
+  // If API key input is required
+  const renderApiKeyInput = () => (
+    <div className="absolute inset-0 bg-background z-10 flex flex-col items-center justify-center p-4 text-center">
+      <p className="text-sm mb-2">Enter your Google Maps API key:</p>
+      <input 
+        type="text" 
+        value={userApiKey} 
+        onChange={(e) => setUserApiKey(e.target.value)}
+        className="w-full p-2 border rounded mb-2 text-xs"
+        placeholder="Your Google Maps API key..."
+      />
+      <button 
+        onClick={() => setShowApiKeyInput(false)} 
+        className="px-3 py-1 bg-primary text-primary-foreground rounded text-sm"
+      >
+        Set API Key
+      </button>
+      <a 
+        href="https://developers.google.com/maps/documentation/javascript/get-api-key" 
+        target="_blank" 
+        rel="noopener noreferrer"
+        className="text-xs text-blue-500 mt-2"
+      >
+        Get a free API key from Google
+      </a>
+    </div>
+  );
+
+  // If lazy loading is enabled and map is not yet in view
+  const renderLazyLoadingState = () => (
+    <div className="absolute inset-0 bg-muted flex items-center justify-center">
+      <div className="text-sm text-muted-foreground">Map will load when scrolled into view</div>
+    </div>
+  );
 
   return (
-    <div className={cn('w-full h-64 bg-gray-100 rounded-lg relative overflow-hidden', className)}>
-      {showTokenInput && (
-        <div className="absolute inset-0 bg-background z-10 flex flex-col items-center justify-center p-4 text-center">
-          <p className="text-sm mb-2">Enter your Mapbox access token:</p>
-          <input 
-            type="text" 
-            value={userToken} 
-            onChange={(e) => setUserToken(e.target.value)}
-            className="w-full p-2 border rounded mb-2 text-xs"
-            placeholder="pk.eyJ1Ijoi..."
-          />
-          <button 
-            onClick={() => setShowTokenInput(false)} 
-            className="px-3 py-1 bg-primary text-primary-foreground rounded text-sm"
-          >
-            Set Token
-          </button>
-          <a 
-            href="https://account.mapbox.com/access-tokens/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-xs text-blue-500 mt-2"
-          >
-            Get a token from Mapbox
-          </a>
-        </div>
+    <div className={cn('w-full h-64 bg-gray-100 rounded-lg relative overflow-hidden', className)} ref={mapContainerRef}>
+      {showApiKeyInput && renderApiKeyInput()}
+      
+      {shouldInitialize && !showApiKeyInput && (
+        <>
+          {isLoaded ? (
+            <GoogleMap
+              mapContainerStyle={{
+                width: '100%',
+                height: '100%'
+              }}
+              center={centerLocation}
+              zoom={zoom}
+              onLoad={onLoad}
+              onUnmount={onUnmount}
+              options={{
+                disableDefaultUI: !interactive,
+                scrollwheel: interactive,
+                zoomControl: interactive,
+                streetViewControl: false,
+                mapTypeControl: false,
+                fullscreenControl: interactive,
+                styles: [
+                  {
+                    featureType: 'poi',
+                    elementType: 'labels',
+                    stylers: [{ visibility: 'off' }]
+                  }
+                ]
+              }}
+            >
+              {locations.map((location) => (
+                <Marker
+                  key={location.id}
+                  position={{ lat: location.lat, lng: location.lng }}
+                  icon={getMarkerIcon(location.type, location.status)}
+                  onClick={() => handleMarkerClick(location)}
+                  animation={google.maps.Animation.DROP}
+                  title={location.name || location.type}
+                />
+              ))}
+              
+              {selectedMarker && (
+                <InfoWindow
+                  position={{ lat: selectedMarker.lat, lng: selectedMarker.lng }}
+                  onCloseClick={handleInfoWindowClose}
+                >
+                  <div className="p-1">
+                    <strong>{selectedMarker.name || selectedMarker.type}</strong>
+                    {selectedMarker.status && (
+                      <div className="text-xs mt-1">Status: {selectedMarker.status}</div>
+                    )}
+                  </div>
+                </InfoWindow>
+              )}
+            </GoogleMap>
+          ) : renderLoadingState()}
+        </>
       )}
       
-      <div ref={mapContainer} className="w-full h-full" />
-      
-      {!isMapLoaded && !showTokenInput && shouldInitialize && (
-        <div className="absolute inset-0 bg-background/50 backdrop-blur-sm flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-            <span className="text-sm">Loading map...</span>
-          </div>
-        </div>
-      )}
-      
-      {!shouldInitialize && lazy && (
-        <div className="absolute inset-0 bg-muted flex items-center justify-center">
-          <div className="text-sm text-muted-foreground">Map will load when scrolled into view</div>
-        </div>
-      )}
+      {!shouldInitialize && lazy && renderLazyLoadingState()}
     </div>
   );
 };
