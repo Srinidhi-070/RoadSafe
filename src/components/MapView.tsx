@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { cn } from '@/lib/utils';
@@ -20,10 +19,8 @@ interface MapViewProps {
   zoom?: number;
   interactive?: boolean;
   lazy?: boolean;
+  apiKey?: string; // New optional prop for API key
 }
-
-// Default Google Maps API key - users can provide their own
-const GOOGLE_MAPS_API_KEY = '';
 
 const MapView: React.FC<MapViewProps> = ({ 
   className, 
@@ -31,10 +28,11 @@ const MapView: React.FC<MapViewProps> = ({
   centerLocation = { lat: 40.7128, lng: -74.0060 }, // Default to NYC
   zoom = 12,
   interactive = true,
-  lazy = false 
+  lazy = false,
+  apiKey = '' // Default to empty string
 }) => {
-  const [userApiKey, setUserApiKey] = useState<string>(GOOGLE_MAPS_API_KEY);
-  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(!GOOGLE_MAPS_API_KEY);
+  const [userApiKey, setUserApiKey] = useState<string>(apiKey);
+  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(!apiKey);
   const [selectedMarker, setSelectedMarker] = useState<Location | null>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const [shouldInitialize, setShouldInitialize] = useState(!lazy);
