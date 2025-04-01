@@ -1,19 +1,32 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Trash2, Loader2, MicIcon, StopCircleIcon } from 'lucide-react';
+import { ArrowLeft, Send, Trash2, Loader2, MicIcon, StopCircleIcon, Settings, X } from 'lucide-react';
 import ChatBubble from '@/components/ChatBubble';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import { useChatbot } from '@/contexts/ChatbotContext';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const ChatAssistant = () => {
   const navigate = useNavigate();
-  const { messages, isProcessing, sendMessage, clearMessages } = useChatbot();
+  const { 
+    messages, 
+    isProcessing, 
+    sendMessage, 
+    clearMessages,
+    useAi,
+    setUseAi,
+    apiKey,
+    setApiKey
+  } = useChatbot();
   
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -60,6 +73,18 @@ const ChatAssistant = () => {
     }
   };
   
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setApiKey(e.target.value);
+  };
+  
+  const handleAiToggle = (checked: boolean) => {
+    setUseAi(checked);
+    if (checked && !apiKey) {
+      setSettingsOpen(true);
+      toast.info('Please enter an API key to use AI responses');
+    }
+  };
+  
   return (
     <div className="min-h-screen pt-6 pb-24 px-4 flex flex-col bg-gradient-to-b from-background to-background/80">
       {/* Header */}
@@ -76,15 +101,89 @@ const ChatAssistant = () => {
             </Button>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">First Aid Assistant</h1>
           </div>
-          <Button
-            onClick={clearMessages}
-            variant="ghost"
-            className="rounded-full p-2.5 hover:bg-destructive/10 hover:text-destructive"
-            size="icon"
-          >
-            <Trash2 className="h-5 w-5" />
-          </Button>
+          
+          <div className="flex items-center gap-2">
+            {/* Settings Dialog */}
+            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="rounded-full p-2.5"
+                  size="icon"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Chat Settings</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="use-ai" className="flex items-center gap-2">
+                      Use AI Responses
+                      {useAi && !apiKey && (
+                        <span className="text-xs text-yellow-500">API key required</span>
+                      )}
+                    </Label>
+                    <Switch 
+                      id="use-ai" 
+                      checked={useAi}
+                      onCheckedChange={handleAiToggle}
+                    />
+                  </div>
+                  
+                  {useAi && (
+                    <div className="space-y-2">
+                      <Label htmlFor="api-key">API Key</Label>
+                      <div className="relative">
+                        <Input
+                          id="api-key"
+                          type="password"
+                          placeholder="Enter your HuggingFace API key"
+                          value={apiKey}
+                          onChange={handleApiKeyChange}
+                          className="pr-8"
+                        />
+                        {apiKey && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3"
+                            onClick={() => setApiKey('')}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Get a free API key from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">HuggingFace</a>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Button
+              onClick={clearMessages}
+              variant="ghost"
+              className="rounded-full p-2.5 hover:bg-destructive/10 hover:text-destructive"
+              size="icon"
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
+        
+        {/* AI status indicator */}
+        {useAi && (
+          <div className="flex items-center text-xs mt-2 text-muted-foreground">
+            <div className={`w-2 h-2 rounded-full ${apiKey ? 'bg-green-500' : 'bg-amber-500'} mr-1`}></div>
+            {apiKey ? "AI mode active" : "AI mode enabled (needs API key)"}
+          </div>
+        )}
       </AnimatedContainer>
       
       {/* Chat area */}

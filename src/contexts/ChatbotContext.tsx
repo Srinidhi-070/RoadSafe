@@ -1,4 +1,7 @@
+
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import { getAiResponse } from '@/services/AiChatService';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
@@ -12,6 +15,10 @@ interface ChatbotContextProps {
   isProcessing: boolean;
   sendMessage: (text: string) => Promise<void>;
   clearMessages: () => void;
+  useAi: boolean;
+  setUseAi: (value: boolean) => void;
+  apiKey: string;
+  setApiKey: (key: string) => void;
 }
 
 const ChatbotContext = createContext<ChatbotContextProps | undefined>(undefined);
@@ -19,14 +26,18 @@ const ChatbotContext = createContext<ChatbotContextProps | undefined>(undefined)
 export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useAi, setUseAi] = useState(false);
+  const [apiKey, setApiKey] = useState('');
   
-  // Load previous chat from localStorage
+  // Load previous chat and settings from localStorage
   useEffect(() => {
     try {
       const storedMessages = localStorage.getItem('chatbotMessages');
+      const storedUseAi = localStorage.getItem('chatbotUseAi');
+      const storedApiKey = localStorage.getItem('chatbotApiKey');
+      
       if (storedMessages) {
         const parsedMessages = JSON.parse(storedMessages);
-        // Convert timestamp strings back to Date objects
         setMessages(parsedMessages.map((msg: any) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
@@ -41,6 +52,14 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
         };
         setMessages([welcomeMessage]);
       }
+      
+      if (storedUseAi) {
+        setUseAi(JSON.parse(storedUseAi));
+      }
+      
+      if (storedApiKey) {
+        setApiKey(storedApiKey);
+      }
     } catch (error) {
       console.error('Error loading chat history:', error);
     }
@@ -50,6 +69,15 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
   useEffect(() => {
     localStorage.setItem('chatbotMessages', JSON.stringify(messages));
   }, [messages]);
+  
+  // Save settings to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('chatbotUseAi', JSON.stringify(useAi));
+  }, [useAi]);
+  
+  useEffect(() => {
+    localStorage.setItem('chatbotApiKey', apiKey);
+  }, [apiKey]);
   
   // Predefined responses for demo
   const firstAidResponses = {
@@ -76,27 +104,23 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
     setIsProcessing(true);
     
     try {
-      // Simulate AI processing delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      let responseText = '';
       
-      // Generate a response based on keywords in the user's message
-      let responseText = firstAidResponses.default;
-      
-      const lowerCaseText = text.toLowerCase();
-      
-      if (lowerCaseText.includes('bleeding') || lowerCaseText.includes('blood')) {
-        responseText = firstAidResponses.bleeding;
-      } else if (lowerCaseText.includes('cpr') || lowerCaseText.includes('heart') || lowerCaseText.includes('unconscious')) {
-        responseText = firstAidResponses.cpr;
-      } else if (lowerCaseText.includes('fracture') || lowerCaseText.includes('broken bone') || lowerCaseText.includes('break')) {
-        responseText = firstAidResponses.fracture;
-      } else if (lowerCaseText.includes('burn') || lowerCaseText.includes('scalded')) {
-        responseText = firstAidResponses.burn;
-      } else if (lowerCaseText.includes('choking') || lowerCaseText.includes('can\'t breathe')) {
-        responseText = firstAidResponses.choking;
+      // If AI is enabled and API key is provided, try to get AI response
+      if (useAi && apiKey) {
+        try {
+          responseText = await getAiResponse(text, apiKey);
+        } catch (error) {
+          console.error('AI response error:', error);
+          toast.error('Error getting AI response, falling back to predefined responses');
+          responseText = getKeywordBasedResponse(text);
+        }
+      } else {
+        // Use regular keyword matching
+        responseText = getKeywordBasedResponse(text);
       }
       
-      // Add AI response
+      // Add AI or keyword-based response
       const botMessage: Message = {
         id: Date.now().toString(),
         text: responseText,
@@ -122,6 +146,27 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
   
+  const getKeywordBasedResponse = (text: string): string => {
+    // Generate a response based on keywords in the user's message
+    let responseText = firstAidResponses.default;
+    
+    const lowerCaseText = text.toLowerCase();
+    
+    if (lowerCaseText.includes('bleeding') || lowerCaseText.includes('blood')) {
+      responseText = firstAidResponses.bleeding;
+    } else if (lowerCaseText.includes('cpr') || lowerCaseText.includes('heart') || lowerCaseText.includes('unconscious')) {
+      responseText = firstAidResponses.cpr;
+    } else if (lowerCaseText.includes('fracture') || lowerCaseText.includes('broken bone') || lowerCaseText.includes('break')) {
+      responseText = firstAidResponses.fracture;
+    } else if (lowerCaseText.includes('burn') || lowerCaseText.includes('scalded')) {
+      responseText = firstAidResponses.burn;
+    } else if (lowerCaseText.includes('choking') || lowerCaseText.includes('can\'t breathe')) {
+      responseText = firstAidResponses.choking;
+    }
+    
+    return responseText;
+  };
+  
   const clearMessages = () => {
     // Keep only the welcome message
     const welcomeMessage: Message = {
@@ -140,7 +185,11 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
         messages,
         isProcessing,
         sendMessage,
-        clearMessages
+        clearMessages,
+        useAi,
+        setUseAi,
+        apiKey,
+        setApiKey
       }}
     >
       {children}
