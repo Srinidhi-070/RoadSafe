@@ -2,6 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { User, Bot } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface ChatBubbleProps {
   message: string;
@@ -19,23 +20,26 @@ const ChatBubble = ({
   return (
     <div
       className={cn(
-        'flex items-start gap-2 max-w-[80%]',
+        'flex items-start gap-3 max-w-[80%]',
         isUser ? 'flex-row-reverse self-end' : 'self-start',
         className
       )}
     >
-      <div 
+      <Avatar
         className={cn(
-          'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-muted'
+          'h-8 w-8 border',
+          isUser ? 'bg-primary border-primary/30' : 'bg-muted border-muted/50'
         )}
       >
-        {isUser ? (
-          <User className="h-4 w-4" />
-        ) : (
-          <Bot className="h-4 w-4" />
-        )}
-      </div>
+        <AvatarFallback className="text-xs">
+          {isUser ? (
+            <User className="h-4 w-4" />
+          ) : (
+            <Bot className="h-4 w-4" />
+          )}
+        </AvatarFallback>
+      </Avatar>
+      
       <div className="space-y-1">
         <div
           className={cn(
