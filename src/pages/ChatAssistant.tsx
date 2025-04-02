@@ -34,6 +34,7 @@ const ChatAssistant = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
@@ -55,14 +56,19 @@ const ChatAssistant = () => {
     
     const handleResize = () => {
       // If the window height decreases significantly, assume keyboard is open
-      const keyboardOpen = window.innerHeight < originalHeight * 0.75;
-      setIsKeyboardOpen(keyboardOpen);
+      const newHeight = window.innerHeight;
+      const heightDifference = originalHeight - newHeight;
+      const keyboardOpen = heightDifference > 100;
       
+      setIsKeyboardOpen(keyboardOpen);
       if (keyboardOpen) {
+        setKeyboardHeight(heightDifference);
         // When keyboard opens, scroll to bottom with a slight delay
         setTimeout(() => {
           messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }, 300);
+      } else {
+        setKeyboardHeight(0);
       }
     };
     
@@ -115,10 +121,14 @@ const ChatAssistant = () => {
     }
   };
   
+  // Calculate bottom padding to avoid keyboard overlap
+  const bottomPadding = isKeyboardOpen ? keyboardHeight : 0;
+  
   return (
     <div 
       className="min-h-screen flex flex-col bg-gradient-to-b from-background to-background/80"
       ref={chatContainerRef}
+      style={{ paddingBottom: bottomPadding }}
     >
       {/* Header - Always visible */}
       <AnimatedContainer className="p-4 flex-shrink-0 sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
@@ -148,7 +158,7 @@ const ChatAssistant = () => {
                     <Settings className="h-5 w-5" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="bottom" className="h-[40vh]">
+                <SheetContent side="bottom" className="h-[40vh] pb-safe">
                   <div className="p-4">
                     <h3 className="text-lg font-semibold mb-4">Chat Settings</h3>
                     <div className="space-y-4">
@@ -191,7 +201,7 @@ const ChatAssistant = () => {
                             )}
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            Get a free API key from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">HuggingFace</a>
+                            API key is set! You can now use AI responses.
                           </p>
                         </div>
                       )}
@@ -254,7 +264,7 @@ const ChatAssistant = () => {
                           )}
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Get a free API key from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">HuggingFace</a>
+                          API key is set! You can now use AI responses.
                         </p>
                       </div>
                     )}
@@ -311,7 +321,7 @@ const ChatAssistant = () => {
       </ScrollArea>
       
       {/* Input area - Fixed at bottom */}
-      <div className={`sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pt-3 pb-8 px-4 ${isKeyboardOpen ? 'pb-2' : 'pb-8'}`}>
+      <div className={`sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pt-3 px-4 ${isKeyboardOpen ? 'pb-2' : 'pb-8'} z-20`}>
         <div className="relative flex items-center">
           <button
             onClick={toggleRecording}

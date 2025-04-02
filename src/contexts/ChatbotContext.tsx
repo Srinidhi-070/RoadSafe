@@ -23,11 +23,14 @@ interface ChatbotContextProps {
 
 const ChatbotContext = createContext<ChatbotContextProps | undefined>(undefined);
 
+// Default HuggingFace API Key - use a dedicated API key for this app
+const DEFAULT_API_KEY = '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';
+
 export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [useAi, setUseAi] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [useAi, setUseAi] = useState(true); // Default to true since we have an API key
+  const [apiKey, setApiKey] = useState(DEFAULT_API_KEY);
   
   // Load previous chat and settings from localStorage
   useEffect(() => {
@@ -57,7 +60,7 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
         setUseAi(JSON.parse(storedUseAi));
       }
       
-      if (storedApiKey) {
+      if (storedApiKey && storedApiKey !== DEFAULT_API_KEY) {
         setApiKey(storedApiKey);
       }
     } catch (error) {
@@ -76,7 +79,9 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
   }, [useAi]);
   
   useEffect(() => {
-    localStorage.setItem('chatbotApiKey', apiKey);
+    if (apiKey !== DEFAULT_API_KEY) {
+      localStorage.setItem('chatbotApiKey', apiKey);
+    }
   }, [apiKey]);
   
   // Predefined responses for demo
