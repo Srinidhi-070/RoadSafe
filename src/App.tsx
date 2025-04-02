@@ -17,33 +17,36 @@ import ProfileScreen from "./pages/ProfileScreen";
 import EmergencyPage from "./pages/EmergencyPage";
 import NotFound from "./pages/NotFound";
 
+// Create a new QueryClient instance outside of the component
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <EmergencyProvider>
-          <ChatbotProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/report" element={<ReportAccident />} />
-                <Route path="/report/:id" element={<ReportDetails />} />
-                <Route path="/chat" element={<ChatAssistant />} />
-                <Route path="/map" element={<MapScreen />} />
-                <Route path="/profile" element={<ProfileScreen />} />
-                <Route path="/emergency" element={<EmergencyPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </ChatbotProvider>
-        </EmergencyProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <EmergencyProvider>
+            <ChatbotProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/report" element={<ReportAccident />} />
+                  <Route path="/report/:id" element={<ReportDetails />} />
+                  <Route path="/chat" element={<ChatAssistant />} />
+                  <Route path="/map" element={<MapScreen />} />
+                  <Route path="/profile" element={<ProfileScreen />} />
+                  <Route path="/emergency" element={<EmergencyPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </ChatbotProvider>
+          </EmergencyProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
