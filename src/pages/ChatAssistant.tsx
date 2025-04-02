@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Trash2, Loader2, MicIcon, StopCircleIcon, Settings, X } from 'lucide-react';
+import { ArrowLeft, Send, Trash2, Loader2, MicIcon, StopCircleIcon, Settings, X, Volume2, VolumeX } from 'lucide-react';
 import ChatBubble from '@/components/ChatBubble';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import { useChatbot } from '@/contexts/ChatbotContext';
@@ -15,6 +15,14 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+
+// Web Speech API interfaces
+declare global {
+  interface Window {
+    webkitSpeechRecognition: any;
+    SpeechRecognition: any;
+  }
+}
 
 const ChatAssistant = () => {
   const navigate = useNavigate();
@@ -35,10 +43,13 @@ const ChatAssistant = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isSpeechEnabled, setIsSpeechEnabled] = useState(true);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const speechSynthesisRef = useRef<SpeechSynthesisUtterance | null>(null);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -49,6 +60,79 @@ const ChatAssistant = () => {
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    // Initialize Web Speech API
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'en-US';
+      
+      recognitionRef.current.onstart = () => {
+        setIsRecording(true);
+        toast.info('Listening... Speak now');
+      };
+      
+      recognitionRef.current.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((result: any) => result[0])
+          .map((result: any) => result.transcript)
+          .join('');
+        
+        setInput(transcript);
+      };
+      
+      recognitionRef.current.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsRecording(false);
+        if (event.error === 'not-allowed') {
+          toast.error('Microphone access denied. Please allow microphone access in your browser settings.');
+        } else {
+          toast.error('Speech recognition error: ' + event.error);
+        }
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsRecording(false);
+      };
+    } else {
+      toast.error('Speech recognition is not supported in this browser');
+    }
+
+    // Initialize speech synthesis
+    speechSynthesisRef.current = new SpeechSynthesisUtterance();
+    speechSynthesisRef.current.lang = 'en-US';
+    speechSynthesisRef.current.rate = 1.0;
+    speechSynthesisRef.current.pitch = 1.0;
+    
+    // Clean up on unmount
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // Ignore errors when stopping recognition
+        }
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  // Speak bot messages when they arrive
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+    
+    if (lastMessage && !lastMessage.isUser && isSpeechEnabled && !isProcessing && speechSynthesisRef.current) {
+      speechSynthesisRef.current.text = lastMessage.text;
+      window.speechSynthesis.speak(speechSynthesisRef.current);
+    }
+  }, [messages, isProcessing, isSpeechEnabled]);
   
   // Handle keyboard visibility changes
   useEffect(() => {
@@ -79,6 +163,11 @@ const ChatAssistant = () => {
   const handleSendMessage = async () => {
     if (!input.trim() || isProcessing) return;
     
+    // Cancel any ongoing speech
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    
     await sendMessage(input);
     setInput('');
     inputRef.current?.focus();
@@ -92,20 +181,34 @@ const ChatAssistant = () => {
   };
   
   const toggleRecording = () => {
-    // In a real implementation, this would use the Web Speech API or a similar service
+    if (!recognitionRef.current) {
+      toast.error('Speech recognition is not supported in this browser');
+      return;
+    }
+    
     if (isRecording) {
-      setIsRecording(false);
-      toast.info('Voice recording stopped');
+      recognitionRef.current.stop();
     } else {
-      setIsRecording(true);
-      toast.info('Listening... Speak now');
+      // Cancel any ongoing speech before recording
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
       
-      // Simulate speech recognition after 2 seconds
-      setTimeout(() => {
-        setIsRecording(false);
-        setInput('How do I perform CPR?');
-        toast.success('Voice recognized: "How do I perform CPR?"');
-      }, 2000);
+      recognitionRef.current.start();
+    }
+  };
+
+  const toggleSpeech = () => {
+    setIsSpeechEnabled(prev => !prev);
+    
+    if (isSpeechEnabled) {
+      // Cancel any ongoing speech
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+      toast.info('Text-to-speech disabled');
+    } else {
+      toast.info('Text-to-speech enabled');
     }
   };
   
@@ -146,6 +249,21 @@ const ChatAssistant = () => {
           </div>
           
           <div className="flex items-center gap-2">
+            {/* Text-to-Speech Toggle */}
+            <Button
+              onClick={toggleSpeech}
+              variant="ghost"
+              className="rounded-full p-2.5"
+              size="icon"
+              title={isSpeechEnabled ? "Disable text-to-speech" : "Enable text-to-speech"}
+            >
+              {isSpeechEnabled ? (
+                <Volume2 className="h-5 w-5" />
+              ) : (
+                <VolumeX className="h-5 w-5" />
+              )}
+            </Button>
+            
             {/* Settings Dialog */}
             {isMobile ? (
               <Sheet>
