@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Send, Trash2, Loader2, MicIcon, StopCircleIcon, Settings, X } from 'lucide-react';
@@ -10,9 +11,14 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
 
 const ChatAssistant = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { 
     messages, 
     isProcessing, 
@@ -27,9 +33,11 @@ const ChatAssistant = () => {
   const [input, setInput] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   
   // Scroll to bottom when messages change
   useEffect(() => {
@@ -41,11 +49,33 @@ const ChatAssistant = () => {
     inputRef.current?.focus();
   }, []);
   
+  // Handle keyboard visibility changes
+  useEffect(() => {
+    const originalHeight = window.innerHeight;
+    
+    const handleResize = () => {
+      // If the window height decreases significantly, assume keyboard is open
+      const keyboardOpen = window.innerHeight < originalHeight * 0.75;
+      setIsKeyboardOpen(keyboardOpen);
+      
+      if (keyboardOpen) {
+        // When keyboard opens, scroll to bottom with a slight delay
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 300);
+      }
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+  
   const handleSendMessage = async () => {
     if (!input.trim() || isProcessing) return;
     
     await sendMessage(input);
     setInput('');
+    inputRef.current?.focus();
   };
   
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -86,9 +116,12 @@ const ChatAssistant = () => {
   };
   
   return (
-    <div className="min-h-screen pt-6 pb-24 px-4 flex flex-col bg-gradient-to-b from-background to-background/80">
-      {/* Header */}
-      <AnimatedContainer className="mb-6 flex-shrink-0">
+    <div 
+      className="min-h-screen flex flex-col bg-gradient-to-b from-background to-background/80"
+      ref={chatContainerRef}
+    >
+      {/* Header - Always visible */}
+      <AnimatedContainer className="p-4 flex-shrink-0 sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <Button 
@@ -104,67 +137,131 @@ const ChatAssistant = () => {
           
           <div className="flex items-center gap-2">
             {/* Settings Dialog */}
-            <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="rounded-full p-2.5"
-                  size="icon"
-                >
-                  <Settings className="h-5 w-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Chat Settings</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="use-ai" className="flex items-center gap-2">
-                      Use AI Responses
-                      {useAi && !apiKey && (
-                        <span className="text-xs text-yellow-500">API key required</span>
-                      )}
-                    </Label>
-                    <Switch 
-                      id="use-ai" 
-                      checked={useAi}
-                      onCheckedChange={handleAiToggle}
-                    />
-                  </div>
-                  
-                  {useAi && (
-                    <div className="space-y-2">
-                      <Label htmlFor="api-key">API Key</Label>
-                      <div className="relative">
-                        <Input
-                          id="api-key"
-                          type="password"
-                          placeholder="Enter your HuggingFace API key"
-                          value={apiKey}
-                          onChange={handleApiKeyChange}
-                          className="pr-8"
+            {isMobile ? (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="rounded-full p-2.5"
+                    size="icon"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="bottom" className="h-[40vh]">
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold mb-4">Chat Settings</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="use-ai-mobile" className="flex items-center gap-2">
+                          Use AI Responses
+                          {useAi && !apiKey && (
+                            <span className="text-xs text-yellow-500">API key required</span>
+                          )}
+                        </Label>
+                        <Switch 
+                          id="use-ai-mobile" 
+                          checked={useAi}
+                          onCheckedChange={handleAiToggle}
                         />
-                        {apiKey && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3"
-                            onClick={() => setApiKey('')}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        )}
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Get a free API key from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">HuggingFace</a>
-                      </p>
+                      
+                      {useAi && (
+                        <div className="space-y-2">
+                          <Label htmlFor="api-key-mobile">API Key</Label>
+                          <div className="relative">
+                            <Input
+                              id="api-key-mobile"
+                              type="password"
+                              placeholder="Enter your HuggingFace API key"
+                              value={apiKey}
+                              onChange={handleApiKeyChange}
+                              className="pr-8"
+                            />
+                            {apiKey && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3"
+                                onClick={() => setApiKey('')}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Get a free API key from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">HuggingFace</a>
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            ) : (
+              <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="rounded-full p-2.5"
+                    size="icon"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Chat Settings</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="use-ai" className="flex items-center gap-2">
+                        Use AI Responses
+                        {useAi && !apiKey && (
+                          <span className="text-xs text-yellow-500">API key required</span>
+                        )}
+                      </Label>
+                      <Switch 
+                        id="use-ai" 
+                        checked={useAi}
+                        onCheckedChange={handleAiToggle}
+                      />
+                    </div>
+                    
+                    {useAi && (
+                      <div className="space-y-2">
+                        <Label htmlFor="api-key">API Key</Label>
+                        <div className="relative">
+                          <Input
+                            id="api-key"
+                            type="password"
+                            placeholder="Enter your HuggingFace API key"
+                            value={apiKey}
+                            onChange={handleApiKeyChange}
+                            className="pr-8"
+                          />
+                          {apiKey && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="absolute right-0 top-0 h-full px-3"
+                              onClick={() => setApiKey('')}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Get a free API key from <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-primary underline">HuggingFace</a>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
             
             <Button
               onClick={clearMessages}
@@ -186,37 +283,39 @@ const ChatAssistant = () => {
         )}
       </AnimatedContainer>
       
-      {/* Chat area */}
-      <div className="flex-1 overflow-y-auto mb-4 space-y-4 scroll-hidden pr-1">
-        {messages.map((message) => (
-          <ChatBubble
-            key={message.id}
-            message={message.text}
-            isUser={message.isUser}
-            timestamp={message.timestamp}
-          />
-        ))}
-        
-        {isProcessing && (
-          <div className="flex items-center space-x-2 text-muted-foreground p-3 bg-primary/5 rounded-xl max-w-[80%]">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }}></div>
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '200ms' }}></div>
-              <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '400ms' }}></div>
+      {/* Chat area - Scrollable */}
+      <ScrollArea className="flex-1 px-4 pb-4 pt-2">
+        <div className="space-y-4">
+          {messages.map((message) => (
+            <ChatBubble
+              key={message.id}
+              message={message.text}
+              isUser={message.isUser}
+              timestamp={message.timestamp}
+            />
+          ))}
+          
+          {isProcessing && (
+            <div className="flex items-center space-x-2 text-muted-foreground p-3 bg-primary/5 rounded-xl max-w-[80%]">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '200ms' }}></div>
+                <div className="w-2 h-2 rounded-full bg-primary animate-pulse" style={{ animationDelay: '400ms' }}></div>
+              </div>
+              <span className="text-xs">AI assistant is typing...</span>
             </div>
-            <span className="text-xs">AI assistant is typing...</span>
-          </div>
-        )}
-        
-        <div ref={messagesEndRef} />
-      </div>
+          )}
+          
+          <div ref={messagesEndRef} className="pt-2" />
+        </div>
+      </ScrollArea>
       
-      {/* Input area */}
-      <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pt-3 pb-8 rounded-t-xl shadow-lg">
+      {/* Input area - Fixed at bottom */}
+      <div className={`sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm pt-3 pb-8 px-4 ${isKeyboardOpen ? 'pb-2' : 'pb-8'}`}>
         <div className="relative flex items-center">
           <button
             onClick={toggleRecording}
-            className={`absolute left-4 p-2 rounded-full ${isRecording ? 'text-emergency bg-emergency/10' : 'text-muted-foreground'} hover:text-primary transition-colors`}
+            className={`absolute left-4 p-2 rounded-full ${isRecording ? 'text-emergency bg-emergency/10' : 'text-muted-foreground'} hover:text-primary transition-colors z-10`}
             aria-label={isRecording ? 'Stop recording' : 'Start voice input'}
           >
             {isRecording ? (
@@ -226,21 +325,33 @@ const ChatAssistant = () => {
             )}
           </button>
           
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask for first aid assistance..."
-            className="w-full bg-muted/70 border-none rounded-full py-3.5 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-inner"
-            disabled={isProcessing || isRecording}
-          />
+          {isMobile ? (
+            <Textarea
+              ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask for first aid assistance..."
+              className="w-full min-h-[44px] max-h-[120px] bg-muted/70 border-none rounded-full py-2.5 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-inner resize-none"
+              disabled={isProcessing || isRecording}
+            />
+          ) : (
+            <input
+              ref={inputRef as React.RefObject<HTMLInputElement>}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask for first aid assistance..."
+              className="w-full bg-muted/70 border-none rounded-full py-3.5 pl-12 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 shadow-inner"
+              disabled={isProcessing || isRecording}
+            />
+          )}
           
           <button
             onClick={handleSendMessage}
             disabled={!input.trim() || isProcessing}
-            className="absolute right-4 p-2 rounded-full text-primary bg-primary/10 hover:bg-primary/20 transition-colors disabled:text-muted-foreground disabled:bg-transparent"
+            className="absolute right-4 p-2 rounded-full text-primary bg-primary/10 hover:bg-primary/20 transition-colors disabled:text-muted-foreground disabled:bg-transparent z-10"
             aria-label="Send message"
           >
             {isProcessing ? (
