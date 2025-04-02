@@ -7,10 +7,10 @@ import { cn } from '@/lib/utils';
 import GoogleMapContainer from './map/GoogleMapContainer';
 import ApiKeyInput from './map/ApiKeyInput';
 import { LoadingState, LazyLoadingState } from './map/MapStatus';
-import { Location } from './map/MapMarker';
+import type { Location } from './map/MapMarker';
 
 // Re-export Location type to maintain compatibility
-export { Location } from './map/MapMarker';
+export type { Location } from './map/MapMarker';
 
 interface MapViewProps {
   className?: string;
