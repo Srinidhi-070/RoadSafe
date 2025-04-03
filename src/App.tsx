@@ -15,6 +15,8 @@ import ChatAssistant from "./pages/ChatAssistant";
 import MapScreen from "./pages/MapScreen";
 import ProfileScreen from "./pages/ProfileScreen";
 import EmergencyPage from "./pages/EmergencyPage";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
 
 // Create a new QueryClient instance outside of the component
@@ -32,6 +34,8 @@ const App = () => {
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<SignUp />} />
                   <Route path="/report" element={<ReportAccident />} />
                   <Route path="/report/:id" element={<ReportDetails />} />
                   <Route path="/chat" element={<ChatAssistant />} />
