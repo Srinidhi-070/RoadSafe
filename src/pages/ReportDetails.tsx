@@ -91,7 +91,7 @@ const ReportDetails = () => {
             The accident report you're looking for doesn't exist.
           </p>
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="bg-primary text-primary-foreground px-4 py-2 rounded-md"
           >
             Return Home
@@ -124,7 +124,7 @@ const ReportDetails = () => {
       <AnimatedContainer className="mb-6">
         <div className="flex items-center">
           <button 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="mr-4 p-2 rounded-full hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
