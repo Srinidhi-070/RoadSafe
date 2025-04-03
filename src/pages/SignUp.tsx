@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,9 +23,16 @@ const formSchema = z.object({
 });
 
 const SignUp = () => {
-  const { register } = useAuth();
+  const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -43,7 +50,7 @@ const SignUp = () => {
     try {
       await register(values.name, values.email, values.password);
       toast.success('Registration successful!');
-      navigate('/');
+      navigate('/home');
     } catch (error) {
       console.error('Registration error:', error);
       toast.error('Failed to register. Please try again.');
@@ -56,7 +63,8 @@ const SignUp = () => {
     <div className="container mx-auto h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">Create an account</h1>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-blue-500 via-purple-600 to-pink-500 bg-clip-text text-transparent">RoadSafe</h1>
+          <h2 className="text-2xl font-bold">Create an account</h2>
           <p className="text-muted-foreground mt-2">Enter your information to get started</p>
         </div>
         
@@ -166,11 +174,11 @@ const SignUp = () => {
           </p>
           
           <Link 
-            to="/" 
+            to="/landing" 
             className="flex items-center justify-center text-muted-foreground hover:text-foreground mt-4"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to home
+            Back to landing page
           </Link>
         </div>
       </div>

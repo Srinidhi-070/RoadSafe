@@ -3,11 +3,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EmergencyProvider } from "./contexts/EmergencyContext";
 import { ChatbotProvider } from "./contexts/ChatbotContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 
+import LandingPage from "./pages/LandingPage";
 import Index from "./pages/Index";
 import ReportAccident from "./pages/ReportAccident";
 import ReportDetails from "./pages/ReportDetails";
@@ -33,15 +35,52 @@ const App = () => {
               <Sonner />
               <BrowserRouter>
                 <Routes>
-                  <Route path="/" element={<Index />} />
+                  {/* Public routes */}
+                  <Route path="/landing" element={<LandingPage />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<SignUp />} />
-                  <Route path="/report" element={<ReportAccident />} />
-                  <Route path="/report/:id" element={<ReportDetails />} />
-                  <Route path="/chat" element={<ChatAssistant />} />
-                  <Route path="/map" element={<MapScreen />} />
-                  <Route path="/profile" element={<ProfileScreen />} />
-                  <Route path="/emergency" element={<EmergencyPage />} />
+                  
+                  {/* Root path redirection */}
+                  <Route path="/" element={<Navigate to="/landing" replace />} />
+                  
+                  {/* Protected routes */}
+                  <Route path="/home" element={
+                    <ProtectedRoute>
+                      <Index />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/report" element={
+                    <ProtectedRoute>
+                      <ReportAccident />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/report/:id" element={
+                    <ProtectedRoute>
+                      <ReportDetails />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/chat" element={
+                    <ProtectedRoute>
+                      <ChatAssistant />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/map" element={
+                    <ProtectedRoute>
+                      <MapScreen />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <ProfileScreen />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/emergency" element={
+                    <ProtectedRoute>
+                      <EmergencyPage />
+                    </ProtectedRoute>
+                  } />
+                  
+                  {/* Catch all route */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
