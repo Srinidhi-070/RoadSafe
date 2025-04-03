@@ -20,15 +20,19 @@ const ChatBubble = ({
   return (
     <div
       className={cn(
-        'flex items-start gap-3 max-w-[80%]',
-        isUser ? 'flex-row-reverse self-end' : 'self-start',
+        'flex items-start gap-3 max-w-[90%] w-full',
+        isUser 
+          ? 'flex-row-reverse self-end ml-auto' 
+          : 'self-start mr-auto',
         className
       )}
     >
       <Avatar
         className={cn(
-          'h-8 w-8 border',
-          isUser ? 'bg-primary border-primary/30' : 'bg-muted border-muted/50'
+          'h-8 w-8 flex-shrink-0 border',
+          isUser 
+            ? 'bg-primary border-primary/30 order-2' 
+            : 'bg-muted border-muted/50 order-1'
         )}
       >
         <AvatarFallback className="text-xs">
@@ -40,13 +44,18 @@ const ChatBubble = ({
         </AvatarFallback>
       </Avatar>
       
-      <div className="space-y-1">
+      <div 
+        className={cn(
+          'space-y-1 flex-1',
+          isUser ? 'text-right order-1' : 'text-left order-2'
+        )}
+      >
         <div
           className={cn(
-            'px-4 py-2 rounded-lg',
+            'inline-block px-4 py-2 rounded-lg max-w-full',
             isUser 
-              ? 'bg-primary text-primary-foreground rounded-tr-none' 
-              : 'bg-secondary text-secondary-foreground rounded-tl-none'
+              ? 'bg-primary text-primary-foreground rounded-tr-none ml-auto' 
+              : 'bg-secondary text-secondary-foreground rounded-tl-none mr-auto'
           )}
         >
           {message}
