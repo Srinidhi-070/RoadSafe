@@ -17,7 +17,7 @@ const BottomNavigation = () => {
     {
       icon: <Home className="h-5 w-5" />,
       label: 'Home',
-      path: '/'
+      path: '/home'  // Changed from '/' to '/home' to match the correct route
     },
     {
       icon: <AlertCircle className="h-5 w-5" />,
