@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital } from 'lucide-react';
+import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell } from 'lucide-react';
 import ActionCard from '@/components/ActionCard';
 import EmergencyButton from '@/components/EmergencyButton';
 import AnimatedContainer from '@/components/AnimatedContainer';
@@ -58,7 +58,6 @@ const Index = () => {
     }
   }, []);
   
-  
   // Update map locations when user location changes
   useEffect(() => {
     if (!userLocation) return;
@@ -74,7 +73,7 @@ const Index = () => {
     ];
     
     // Add ambulances if available
-    if (ambulanceLocations.length > 0) {
+    if (ambulanceLocations && ambulanceLocations.length > 0) {
       newLocations.push(...ambulanceLocations);
     }
     
@@ -94,96 +93,120 @@ const Index = () => {
 
   const quickActions = [
     {
-      title: 'Report Accident',
-      description: 'Upload images and get AI analysis',
-      icon: <AlertCircle className="h-5 w-5" />,
-      onClick: () => navigate('/report'),
-      color: 'red'
+      title: 'Emergency',
+      description: 'Get immediate help',
+      icon: <Plus className="h-5 w-5" />,
+      onClick: () => navigate('/emergency'),
+      color: 'purple',
+      className: 'h-40'
     },
     {
-      title: 'First Aid Assistant',
-      description: 'Get emergency medical guidance',
+      title: 'First Aid Guide',
+      description: 'Step-by-step instructions',
       icon: <MessageCircle className="h-5 w-5" />,
       onClick: () => navigate('/chat'),
-      color: 'blue'
-    },
-    {
-      title: 'Emergency Services',
-      description: 'Contact police, ambulance or fire services',
-      icon: <Shield className="h-5 w-5" />,
-      onClick: () => navigate('/services'),
-      color: 'purple'
+      color: 'teal',
+      className: 'h-40'
     },
     {
       title: 'Nearby Hospitals',
-      description: 'Find medical facilities near you',
-      icon: <MapPin className="h-5 w-5" />,
+      description: 'Find medical facilities',
+      icon: <Hospital className="h-5 w-5" />,
       onClick: () => navigate('/map'),
-      color: 'green'
+      color: 'peach',
+      className: 'h-40'
     },
     {
-      title: 'Emergency Contacts',
-      description: 'Manage your emergency contacts',
-      icon: <Users className="h-5 w-5" />,
-      onClick: () => navigate('/profile'),
-      color: 'teal'
+      title: 'Alert Authorities',
+      description: 'Contact police, ambulance or fire',
+      icon: <Shield className="h-5 w-5" />,
+      onClick: () => navigate('/services'),
+      color: 'white',
+      className: 'h-40'
+    }
+  ];
+  
+  const updates = [
+    {
+      title: 'Emergency case: Vehicle collision on Main St',
+      time: '25 minutes ago'
+    },
+    {
+      title: 'System update: AI detection improved by 15%',
+      time: '1 hour ago'
+    },
+    {
+      title: 'Weather alert: Heavy rain expected',
+      time: '2 hours ago'
     }
   ];
 
   return (
-    <div className="min-h-screen pt-6 pb-20 px-4 bg-gradient-to-b from-background to-background/80">
-      {/* Welcome message */}
-      {showWelcome && (
-        <AnimatedContainer animation="fade-in" className="mb-6">
-          <Card className="border-none shadow-md overflow-hidden bg-gradient-to-r from-purple-500/20 to-blue-500/10">
-            <CardContent className="p-4 relative">
-              <button 
-                className="absolute top-2 right-2 text-primary" 
-                onClick={() => setShowWelcome(false)}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-              </button>
-              <h2 className="font-semibold text-primary mb-1">Welcome to RoadSafe</h2>
-              <p className="text-sm text-primary/80">
-                Your AI-powered companion for emergency situations. Report accidents, get first aid guidance, and connect to emergency services.
-              </p>
-            </CardContent>
-          </Card>
-        </AnimatedContainer>
-      )}
+    <div className="min-h-screen pt-6 pb-20 px-4 bg-gradient-to-b from-gray-800 to-gray-900">
+      {/* Header with logo and notification */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-indigo-500">RoadSafe</h1>
+        <button className="p-2 bg-gray-700/50 rounded-full">
+          <Bell className="h-5 w-5 text-white" />
+        </button>
+      </div>
+      
+      {/* Quick action cards in grid layout */}
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        {quickActions.map((action, index) => (
+          <AnimatedContainer 
+            key={action.title} 
+            animation="fade-in" 
+            delay={300 + (index * 100)}
+            className={action.className}
+          >
+            <ActionCard 
+              title={action.title}
+              description={action.description}
+              icon={action.icon}
+              onClick={action.onClick}
+              className={`h-full shadow-md ${index === 0 ? 'bg-indigo-400' : ''} ${index === 1 ? 'bg-teal-400' : ''} ${index === 2 ? 'bg-orange-300' : ''} ${index === 3 ? 'bg-white/10 backdrop-blur-sm' : ''}`}
+              variant={index === 3 ? 'outline' : 'default'}
+            />
+          </AnimatedContainer>
+        ))}
+      </div>
+      
+      {/* Stats section */}
+      <div className="flex justify-between mb-8">
+        <div className="bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl flex-1 mr-2">
+          <div className="text-gray-400 text-sm">Accident-free for</div>
+          <div className="text-2xl font-bold text-teal-400">32 days</div>
+        </div>
+        <div className="bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl flex-1 ml-2">
+          <div className="text-gray-400 text-sm">Ambulance response time</div>
+          <div className="text-2xl font-bold text-indigo-500">5 min</div>
+        </div>
+      </div>
+      
+      {/* Live updates section */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4 text-white">Live Updates</h2>
+        <div className="space-y-3">
+          {updates.map((update, index) => (
+            <div key={index} className="bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl">
+              <div className="text-sm text-gray-400">{update.time}</div>
+              <div className="text-white">{update.title}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-      {/* Header section with multi-color gradient */}
-      <AnimatedContainer className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 font-poppins bg-gradient-to-r from-blue-500 via-purple-600 to-pink-500 bg-clip-text text-transparent">
-          RoadSafe
-        </h1>
-        <p className="text-muted-foreground">
-          Smart emergency assistance at your fingertips
-        </p>
-      </AnimatedContainer>
-
-      {/* Emergency button - Now much bigger */}
-      <AnimatedContainer animation="scale-in" delay={100} className="mb-10 flex justify-center">
-        <EmergencyButton 
-          onClick={() => navigate('/emergency')}
-          size="lg"
-          className="w-40 h-40 text-xl font-bold"
-        />
-      </AnimatedContainer>
-
-      {/* Latest report if exists */}
+      {/* Latest report if exists - keeping original functionality */}
       {latestReport && (
         <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
           <Card className="border-none shadow-md bg-gradient-to-r from-yellow-500/20 to-orange-500/10">
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-lg">Latest Accident Report</h3>
+                <h3 className="font-medium text-lg text-white">Latest Accident Report</h3>
                 <StatusBadge status={latestReport.severity} />
               </div>
-              <div className="text-sm text-muted-foreground mb-3">
+              <div className="text-sm text-gray-400 mb-3">
                 {latestReport.timestamp.toLocaleString()}
               </div>
               
@@ -201,11 +224,11 @@ const Index = () => {
                 </div>
               )}
               
-              <div className="mb-4 text-foreground/90">
+              <div className="mb-4 text-white/90">
                 {latestReport.description || 'No description provided.'}
               </div>
               <button 
-                className="flex items-center text-sm text-primary font-medium"
+                className="flex items-center text-sm text-indigo-400 font-medium"
                 onClick={() => navigate(`/report/${latestReport.id}`)}
               >
                 View details <ArrowRight className="ml-1 h-4 w-4" />
@@ -214,30 +237,6 @@ const Index = () => {
           </Card>
         </AnimatedContainer>
       )}
-
-      {/* Quick actions */}
-      <div className="space-y-4 mb-8">
-        <AnimatedContainer animation="fade-in" delay={300}>
-          <h2 className="text-xl font-semibold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Quick Actions</h2>
-        </AnimatedContainer>
-        
-        {quickActions.map((action, index) => (
-          <AnimatedContainer 
-            key={action.title} 
-            animation="fade-in" 
-            delay={400 + (index * 100)}
-          >
-            <ActionCard 
-              title={action.title}
-              description={action.description}
-              icon={action.icon}
-              onClick={action.onClick}
-              className="shadow-md"
-              colorClass={action.color}
-            />
-          </AnimatedContainer>
-        ))}
-      </div>
 
       <BottomNavigation />
     </div>

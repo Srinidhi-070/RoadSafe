@@ -24,69 +24,75 @@ import NotFound from "./pages/NotFound";
 // Create a new QueryClient instance outside of the component
 const queryClient = new QueryClient();
 
+const AppRoutes = () => {
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/landing" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<SignUp />} />
+      
+      {/* Root path redirection */}
+      <Route path="/" element={<Navigate to="/landing" replace />} />
+      
+      {/* Protected routes */}
+      <Route path="/home" element={
+        <ProtectedRoute>
+          <Index />
+        </ProtectedRoute>
+      } />
+      <Route path="/report" element={
+        <ProtectedRoute>
+          <ReportAccident />
+        </ProtectedRoute>
+      } />
+      <Route path="/report/:id" element={
+        <ProtectedRoute>
+          <ReportDetails />
+        </ProtectedRoute>
+      } />
+      <Route path="/chat" element={
+        <ProtectedRoute>
+          <ChatAssistant />
+        </ProtectedRoute>
+      } />
+      <Route path="/map" element={
+        <ProtectedRoute>
+          <MapScreen />
+        </ProtectedRoute>
+      } />
+      <Route path="/profile" element={
+        <ProtectedRoute>
+          <ProfileScreen />
+        </ProtectedRoute>
+      } />
+      <Route path="/emergency" element={
+        <ProtectedRoute>
+          <EmergencyPage />
+        </ProtectedRoute>
+      } />
+      
+      {/* Catch all route */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AuthProvider>
-          <EmergencyProvider>
-            <ChatbotProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
-                <Routes>
-                  {/* Public routes */}
-                  <Route path="/landing" element={<LandingPage />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  
-                  {/* Root path redirection */}
-                  <Route path="/" element={<Navigate to="/landing" replace />} />
-                  
-                  {/* Protected routes */}
-                  <Route path="/home" element={
-                    <ProtectedRoute>
-                      <Index />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/report" element={
-                    <ProtectedRoute>
-                      <ReportAccident />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/report/:id" element={
-                    <ProtectedRoute>
-                      <ReportDetails />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/chat" element={
-                    <ProtectedRoute>
-                      <ChatAssistant />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/map" element={
-                    <ProtectedRoute>
-                      <MapScreen />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/profile" element={
-                    <ProtectedRoute>
-                      <ProfileScreen />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/emergency" element={
-                    <ProtectedRoute>
-                      <EmergencyPage />
-                    </ProtectedRoute>
-                  } />
-                  
-                  {/* Catch all route */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            </ChatbotProvider>
-          </EmergencyProvider>
-        </AuthProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <EmergencyProvider>
+              <ChatbotProvider>
+                <Toaster />
+                <Sonner />
+                <AppRoutes />
+              </ChatbotProvider>
+            </EmergencyProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
   );
