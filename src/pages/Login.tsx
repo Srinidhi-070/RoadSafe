@@ -54,17 +54,21 @@ const Login = () => {
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8 bg-gray-700/30 backdrop-blur-sm p-8 rounded-2xl shadow-xl">
+    <div className="min-h-screen bg-gradient-to-b from-gray-800 to-gray-900 flex items-center justify-center p-4 sm:p-6">
+      <div className="w-full max-w-md space-y-6 bg-gray-700/30 backdrop-blur-sm p-6 sm:p-8 rounded-2xl shadow-xl">
         <div className="text-center">
-          <div className="bg-gradient-to-b from-blue-500 to-cyan-400 p-5 rounded-2xl w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-            <AlertCircle className="h-10 w-10 text-white" />
+          <div className="mx-auto mb-6 flex items-center justify-center">
+            <img 
+              src="/lovable-uploads/babc7f96-a784-4583-bc62-5b6f7f92da8b.png" 
+              alt="RoadSafe Logo" 
+              className="w-24 h-24 object-contain"
+            />
           </div>
           
-          <h1 className="text-4xl font-bold text-white mb-1">RoadSafe</h1>
-          <p className="text-gray-300 mb-8">Your safety companion on every journey</p>
+          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-1">RoadSafe</h1>
+          <p className="text-gray-300 mb-6 sm:mb-8">Your safety companion on every journey</p>
           
-          <div className="bg-gray-800/40 backdrop-blur-sm p-6 rounded-xl mb-4">
+          <div className="bg-gray-800/40 backdrop-blur-sm p-4 sm:p-6 rounded-xl mb-4">
             <h2 className="text-xl font-medium text-white mb-6">Welcome Back</h2>
             
             <Form {...form}>
@@ -80,7 +84,7 @@ const Login = () => {
                           <Input 
                             placeholder="Email" 
                             type="email" 
-                            className="pl-10 bg-gray-700/50 border-gray-600 focus:border-blue-500 text-white h-12 rounded-lg"
+                            className="pl-10 bg-gray-700/50 border-gray-600 focus:border-blue-500 text-white h-11 sm:h-12 rounded-lg"
                             {...field} 
                             disabled={isLoading}
                           />
@@ -102,7 +106,7 @@ const Login = () => {
                           <Input 
                             placeholder="Password" 
                             type={showPassword ? "text" : "password"}
-                            className="pl-10 bg-gray-700/50 border-gray-600 focus:border-blue-500 text-white h-12 rounded-lg"
+                            className="pl-10 bg-gray-700/50 border-gray-600 focus:border-blue-500 text-white h-11 sm:h-12 rounded-lg"
                             {...field} 
                             disabled={isLoading}
                           />
@@ -126,7 +130,7 @@ const Login = () => {
                 
                 <Button 
                   type="submit" 
-                  className="w-full bg-white hover:bg-gray-100 text-gray-800 font-semibold h-12 rounded-lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold h-11 sm:h-12 rounded-lg"
                   disabled={isLoading}
                 >
                   {isLoading ? "Logging in..." : "Login"}
@@ -141,17 +145,17 @@ const Login = () => {
             </div>
           </div>
           
-          <div className="relative py-6">
+          <div className="relative py-4 sm:py-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-gray-600"></div>
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-gray-800/0 px-4 text-sm text-gray-400">OR</span>
+              <span className="bg-transparent px-4 text-sm text-gray-400">OR</span>
             </div>
           </div>
           
           <Link to="/signup">
-            <Button variant="outline" className="w-full border-gray-600 text-white hover:bg-gray-700 h-12 rounded-lg">
+            <Button variant="outline" className="w-full border-gray-600 text-blue-400 hover:text-white hover:bg-gray-700 h-11 sm:h-12 rounded-lg">
               Create Account
             </Button>
           </Link>
