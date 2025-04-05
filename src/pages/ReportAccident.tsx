@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertTriangle, ArrowLeft, Upload, Check, Loader2 } from 'lucide-react';
@@ -107,7 +106,7 @@ const ReportAccident = () => {
       <AnimatedContainer className="mb-6">
         <div className="flex items-center">
           <button 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/home')}
             className="mr-4 p-2 rounded-full hover:bg-muted transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />

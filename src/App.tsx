@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +20,7 @@ import EmergencyPage from "./pages/EmergencyPage";
 import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
+import MainLayout from "./layouts/MainLayout";
 
 // Create a new QueryClient instance outside of the component
 const queryClient = new QueryClient();
@@ -36,35 +36,23 @@ const AppRoutes = () => {
       {/* Root path redirection */}
       <Route path="/" element={<Navigate to="/landing" replace />} />
       
-      {/* Protected routes */}
-      <Route path="/home" element={
+      {/* Protected routes with MainLayout */}
+      <Route element={
         <ProtectedRoute>
-          <Index />
+          <MainLayout />
         </ProtectedRoute>
-      } />
-      <Route path="/report" element={
-        <ProtectedRoute>
-          <ReportAccident />
-        </ProtectedRoute>
-      } />
+      }>
+        <Route path="/home" element={<Index />} />
+        <Route path="/report" element={<ReportAccident />} />
+        <Route path="/map" element={<MapScreen />} />
+        <Route path="/chat" element={<ChatAssistant />} />
+        <Route path="/profile" element={<ProfileScreen />} />
+      </Route>
+      
+      {/* Protected routes without bottom navigation */}
       <Route path="/report/:id" element={
         <ProtectedRoute>
           <ReportDetails />
-        </ProtectedRoute>
-      } />
-      <Route path="/chat" element={
-        <ProtectedRoute>
-          <ChatAssistant />
-        </ProtectedRoute>
-      } />
-      <Route path="/map" element={
-        <ProtectedRoute>
-          <MapScreen />
-        </ProtectedRoute>
-      } />
-      <Route path="/profile" element={
-        <ProtectedRoute>
-          <ProfileScreen />
         </ProtectedRoute>
       } />
       <Route path="/emergency" element={

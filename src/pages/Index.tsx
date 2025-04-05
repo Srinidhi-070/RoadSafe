@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell } from 'lucide-react';
@@ -9,7 +8,6 @@ import StatusBadge from '@/components/StatusBadge';
 import { useEmergency } from '@/contexts/EmergencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import BottomNavigation from '@/components/BottomNavigation';
 import { Card, CardContent } from '@/components/ui/card';
 import MapView, { Location as MapLocation } from '@/components/MapView';
 import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
@@ -268,8 +266,6 @@ const Index = () => {
           </Card>
         </AnimatedContainer>
       )}
-
-      <BottomNavigation />
     </div>
   );
 };
