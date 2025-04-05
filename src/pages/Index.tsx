@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell } from 'lucide-react';
@@ -7,6 +8,7 @@ import AnimatedContainer from '@/components/AnimatedContainer';
 import StatusBadge from '@/components/StatusBadge';
 import { useEmergency } from '@/contexts/EmergencyContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Card, CardContent } from '@/components/ui/card';
 import MapView, { Location as MapLocation } from '@/components/MapView';
@@ -17,6 +19,7 @@ const Index = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { reports } = useEmergency();
+  const { theme } = useTheme();
   const [showWelcome, setShowWelcome] = useState(true);
 
   // Get the most recent report
@@ -141,13 +144,25 @@ const Index = () => {
     }
   ];
 
+  // Dynamically adjust background and text colors based on theme
+  const bgClass = theme === 'dark' 
+    ? 'bg-gradient-to-b from-gray-900 to-gray-950' 
+    : 'bg-gradient-to-b from-indigo-50 to-blue-100';
+  
+  const textClass = theme === 'dark' ? 'text-white' : 'text-gray-900';
+  const mutedTextClass = theme === 'dark' ? 'text-gray-400' : 'text-gray-600';
+  const cardBgClass = theme === 'dark' 
+    ? 'bg-gray-800/30 backdrop-blur-sm' 
+    : 'bg-white/70 backdrop-blur-sm';
+  const headerBgClass = theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600';
+
   return (
-    <div className="min-h-screen pt-6 pb-20 px-4 bg-gradient-to-b from-gray-800 to-gray-900">
+    <div className={`min-h-screen pt-6 pb-20 px-4 ${bgClass}`}>
       {/* Header with logo and notification */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-indigo-500">RoadSafe</h1>
-        <button className="p-2 bg-gray-700/50 rounded-full">
-          <Bell className="h-5 w-5 text-white" />
+        <h1 className={`text-3xl font-bold ${headerBgClass}`}>RoadSafe</h1>
+        <button className={`p-2 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-white/50'} rounded-full`}>
+          <Bell className={`h-5 w-5 ${textClass}`} />
         </button>
       </div>
       
@@ -165,7 +180,19 @@ const Index = () => {
               description={action.description}
               icon={action.icon}
               onClick={action.onClick}
-              className={`h-full shadow-md ${index === 0 ? 'bg-indigo-400' : ''} ${index === 1 ? 'bg-teal-400' : ''} ${index === 2 ? 'bg-orange-300' : ''} ${index === 3 ? 'bg-white/10 backdrop-blur-sm' : ''}`}
+              className={`h-full shadow-md ${
+                theme === 'dark' ? (
+                  index === 0 ? 'bg-indigo-500/80' : 
+                  index === 1 ? 'bg-teal-500/80' : 
+                  index === 2 ? 'bg-orange-400/80' : 
+                  'bg-white/10 backdrop-blur-sm'
+                ) : (
+                  index === 0 ? 'bg-indigo-400' : 
+                  index === 1 ? 'bg-teal-400' : 
+                  index === 2 ? 'bg-orange-300' : 
+                  'bg-white/80 backdrop-blur-sm'
+                )
+              }`}
               variant={index === 3 ? 'outline' : 'default'}
             />
           </AnimatedContainer>
@@ -174,24 +201,24 @@ const Index = () => {
       
       {/* Stats section */}
       <div className="flex justify-between mb-8">
-        <div className="bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl flex-1 mr-2">
-          <div className="text-gray-400 text-sm">Accident-free for</div>
-          <div className="text-2xl font-bold text-teal-400">32 days</div>
+        <div className={`${cardBgClass} p-4 rounded-xl flex-1 mr-2`}>
+          <div className={`${mutedTextClass} text-sm`}>Accident-free for</div>
+          <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-teal-400' : 'text-teal-600'}`}>32 days</div>
         </div>
-        <div className="bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl flex-1 ml-2">
-          <div className="text-gray-400 text-sm">Ambulance response time</div>
-          <div className="text-2xl font-bold text-indigo-500">5 min</div>
+        <div className={`${cardBgClass} p-4 rounded-xl flex-1 ml-2`}>
+          <div className={`${mutedTextClass} text-sm`}>Ambulance response time</div>
+          <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}>5 min</div>
         </div>
       </div>
       
       {/* Live updates section */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-white">Live Updates</h2>
+        <h2 className={`text-xl font-semibold mb-4 ${textClass}`}>Live Updates</h2>
         <div className="space-y-3">
           {updates.map((update, index) => (
-            <div key={index} className="bg-gray-700/30 backdrop-blur-sm p-4 rounded-xl">
-              <div className="text-sm text-gray-400">{update.time}</div>
-              <div className="text-white">{update.title}</div>
+            <div key={index} className={`${cardBgClass} p-4 rounded-xl`}>
+              <div className={`text-sm ${mutedTextClass}`}>{update.time}</div>
+              <div className={textClass}>{update.title}</div>
             </div>
           ))}
         </div>
@@ -200,13 +227,17 @@ const Index = () => {
       {/* Latest report if exists - keeping original functionality */}
       {latestReport && (
         <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
-          <Card className="border-none shadow-md bg-gradient-to-r from-yellow-500/20 to-orange-500/10">
+          <Card className={`border-none shadow-md ${
+            theme === 'dark' 
+              ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/10' 
+              : 'bg-gradient-to-r from-yellow-100 to-orange-50'
+          }`}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-medium text-lg text-white">Latest Accident Report</h3>
+                <h3 className={`font-medium text-lg ${textClass}`}>Latest Accident Report</h3>
                 <StatusBadge status={latestReport.severity} />
               </div>
-              <div className="text-sm text-gray-400 mb-3">
+              <div className={`text-sm ${mutedTextClass} mb-3`}>
                 {latestReport.timestamp.toLocaleString()}
               </div>
               
@@ -224,11 +255,11 @@ const Index = () => {
                 </div>
               )}
               
-              <div className="mb-4 text-white/90">
+              <div className={`mb-4 ${theme === 'dark' ? 'text-white/90' : 'text-gray-800'}`}>
                 {latestReport.description || 'No description provided.'}
               </div>
               <button 
-                className="flex items-center text-sm text-indigo-400 font-medium"
+                className={`flex items-center text-sm ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'} font-medium`}
                 onClick={() => navigate(`/report/${latestReport.id}`)}
               >
                 View details <ArrowRight className="ml-1 h-4 w-4" />
