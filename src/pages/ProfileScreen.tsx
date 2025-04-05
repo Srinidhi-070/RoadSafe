@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, User, Phone, Heart, Shield, Bell, LogOut } from 'lucide-react';
+import { ArrowLeft, Plus, User, Phone, Heart, Shield, Bell, LogOut, Moon, Sun } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import EmergencyContact from '@/components/EmergencyContact';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmergency } from '@/contexts/EmergencyContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
 import BottomNavigation from '@/components/BottomNavigation';
+import { Switch } from '@/components/ui/switch';
 
 interface ContactFormData {
   name: string;
@@ -19,6 +21,7 @@ const ProfileScreen = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { contacts, addContact, removeContact } = useEmergency();
+  const { theme, toggleTheme } = useTheme();
   
   const [isAddingContact, setIsAddingContact] = useState(false);
   const [contactForm, setContactForm] = useState<ContactFormData>({
@@ -226,6 +229,23 @@ const ProfileScreen = () => {
         <h2 className="text-lg font-semibold mb-4">Settings</h2>
         
         <div className="space-y-2">
+          {/* Theme toggle */}
+          <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+            <div className="flex items-center">
+              {theme === 'dark' ? (
+                <Moon className="h-5 w-5 mr-3 text-primary" />
+              ) : (
+                <Sun className="h-5 w-5 mr-3 text-primary" />
+              )}
+              <span>Dark Mode</span>
+            </div>
+            <Switch 
+              checked={theme === 'dark'}
+              onCheckedChange={toggleTheme}
+              aria-label="Toggle dark mode"
+            />
+          </div>
+          
           <button className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
             <div className="flex items-center">
               <Shield className="h-5 w-5 mr-3 text-primary" />

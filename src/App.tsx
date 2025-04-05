@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { EmergencyProvider } from "./contexts/EmergencyContext";
 import { ChatbotProvider } from "./contexts/ChatbotContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import LandingPage from "./pages/LandingPage";
@@ -83,15 +84,17 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BrowserRouter>
-          <AuthProvider>
-            <EmergencyProvider>
-              <ChatbotProvider>
-                <Toaster />
-                <Sonner />
-                <AppRoutes />
-              </ChatbotProvider>
-            </EmergencyProvider>
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <EmergencyProvider>
+                <ChatbotProvider>
+                  <Toaster />
+                  <Sonner />
+                  <AppRoutes />
+                </ChatbotProvider>
+              </EmergencyProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
