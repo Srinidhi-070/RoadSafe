@@ -182,11 +182,11 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
     } else if (lowerCaseText.includes('break') || lowerCaseText.includes('fracture') || lowerCaseText.includes('broken')) {
       return firstAidResponses.fracture;
     } else if (lowerCaseText.includes('heart') || lowerCaseText.includes('chest pain')) {
-      return firstAidResponses.heart_attack;
+      return firstAidResponses['heart attack'];
     } else if (lowerCaseText.includes('seizure') || lowerCaseText.includes('fit')) {
       return firstAidResponses.seizure;
     } else if (lowerCaseText.includes('snake')) {
-      return firstAidResponses.snake_bite;
+      return firstAidResponses['snake bite'];
     } else if (lowerCaseText.includes('sprain') || lowerCaseText.includes('twisted')) {
       return firstAidResponses.sprain;
     } else if (lowerCaseText.includes('stroke')) {
