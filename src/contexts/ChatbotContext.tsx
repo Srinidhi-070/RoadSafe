@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
 import { getAiResponse } from '@/services/AiChatService';
 import { toast } from 'sonner';
@@ -84,14 +83,33 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
     }
   }, [apiKey]);
   
-  // Predefined responses for demo
+  // Predefined responses for first aid scenarios
   const firstAidResponses = {
-    'bleeding': "To control bleeding: 1) Apply direct pressure on the wound with a clean cloth or bandage. 2) If possible, elevate the injured area above the heart. 3) Apply pressure to the artery if direct pressure doesn't stop the bleeding. 4) Only use a tourniquet as a last resort for life-threatening bleeding.",
-    'cpr': "For CPR: 1) Ensure the scene is safe. 2) Check for responsiveness. 3) Call for help or ask someone to call emergency services. 4) Begin chest compressions: push hard and fast in the center of the chest, about 2 inches deep at a rate of 100-120 compressions per minute. 5) If trained, give rescue breaths. 6) Continue until help arrives.",
-    'fracture': "For a suspected fracture: 1) Immobilize the injured area. 2) Apply a cold pack wrapped in cloth. 3) Elevate the injured area if possible. 4) Treat for shock if necessary. 5) Seek medical attention immediately.",
-    'burn': "For burns: 1) Cool the burn with cool (not cold) running water for at least 10 minutes. 2) Cover with a clean, non-stick bandage. 3) Do not apply ice, butter, or any ointments. 4) For severe burns, seek medical attention immediately.",
-    'choking': "For choking: 1) If the person can cough or speak, encourage them to cough. 2) If they cannot cough or speak, stand behind them and perform abdominal thrusts (Heimlich maneuver): place a fist with the thumb side just above their navel, grasp your fist with your other hand, and pull inward and upward sharply. 3) Repeat until the object is expelled or the person becomes unconscious. 4) If unconscious, begin CPR.",
-    'default': "I'm here to provide first aid guidance. Please let me know what type of emergency situation you're dealing with (bleeding, burns, CPR, choking, fracture, etc.), and I'll provide step-by-step instructions."
+    'bleeding': "For bleeding: 1) Apply direct pressure with a clean cloth 2) Elevate the injured area 3) If bleeding continues, apply more layers without removing the first cloth 4) Seek immediate medical attention for severe bleeding.",
+    
+    'burn': "For burns: 1) Cool under running water for 10-20 minutes 2) Remove any jewelry/tight items 3) Don't pop blisters 4) Cover with sterile gauze 5) Seek medical help for severe or chemical burns.",
+    
+    'choking': "For choking: 1) Give 5 back blows between shoulder blades 2) If unsuccessful, give 5 abdominal thrusts (Heimlich maneuver) 3) Alternate between back blows and thrusts 4) If person becomes unconscious, start CPR.",
+    
+    'fracture': "For suspected fracture: 1) Don't move the injured area 2) Apply ice pack wrapped in cloth 3) Immobilize the injured part 4) Seek immediate medical attention.",
+    
+    'heart attack': "For heart attack: 1) Call emergency services immediately 2) Help person sit and rest 3) Loosen tight clothing 4) Give aspirin if available and no known allergies 5) Be prepared to perform CPR.",
+    
+    'seizure': "For seizure: 1) Clear the area of hazards 2) Cushion their head 3) Don't restrain them 4) Time the seizure 5) Turn them on their side when movement stops 6) Stay with them until fully recovered.",
+    
+    'snake bite': "For snake bite: 1) Keep person calm and still 2) Remove constricting items 3) Mark the bite location and time 4) Don't apply tourniquet or ice 5) Seek immediate medical help.",
+    
+    'sprain': "For sprain: Remember RICE: 1) Rest the injured area 2) Ice for 20 minutes every 2-3 hours 3) Compress with elastic bandage 4) Elevate above heart level.",
+    
+    'stroke': "For stroke signs, remember FAST: F - Face drooping, A - Arm weakness, S - Speech difficulty, T - Time to call emergency services immediately.",
+    
+    'unconscious': "For unconscious person: 1) Check responsiveness 2) Open airway 3) Check breathing 4) If breathing, place in recovery position 5) If not breathing, start CPR 6) Call emergency services.",
+    
+    'cpr': "Adult CPR steps: 1) Check scene safety 2) Call emergency services 3) 30 chest compressions (100-120/minute) 4) 2 rescue breaths 5) Continue 30:2 ratio until help arrives or person shows signs of life.",
+    
+    'allergic': "For severe allergic reaction: 1) Check for epinephrine auto-injector 2) Help them use it if available 3) Call emergency services 4) Keep them calm and lying flat 5) Monitor breathing and consciousness.",
+    
+    'default': "I'm your First Aid Assistant. Please describe the emergency situation (like bleeding, burns, choking, etc.) and I'll provide specific first aid instructions. In life-threatening situations, always call emergency services first."
   };
   
   const sendMessage = async (text: string) => {
@@ -152,24 +170,36 @@ export const ChatbotProvider = ({ children }: { children: React.ReactNode }) => 
   };
   
   const getKeywordBasedResponse = (text: string): string => {
-    // Generate a response based on keywords in the user's message
-    let responseText = firstAidResponses.default;
-    
     const lowerCaseText = text.toLowerCase();
     
+    // Check for common synonyms and variations
     if (lowerCaseText.includes('bleeding') || lowerCaseText.includes('blood')) {
-      responseText = firstAidResponses.bleeding;
-    } else if (lowerCaseText.includes('cpr') || lowerCaseText.includes('heart') || lowerCaseText.includes('unconscious')) {
-      responseText = firstAidResponses.cpr;
-    } else if (lowerCaseText.includes('fracture') || lowerCaseText.includes('broken bone') || lowerCaseText.includes('break')) {
-      responseText = firstAidResponses.fracture;
-    } else if (lowerCaseText.includes('burn') || lowerCaseText.includes('scalded')) {
-      responseText = firstAidResponses.burn;
-    } else if (lowerCaseText.includes('choking') || lowerCaseText.includes('can\'t breathe')) {
-      responseText = firstAidResponses.choking;
+      return firstAidResponses.bleeding;
+    } else if (lowerCaseText.includes('burn') || lowerCaseText.includes('scalded') || lowerCaseText.includes('hot')) {
+      return firstAidResponses.burn;
+    } else if (lowerCaseText.includes('chok') || lowerCaseText.includes("can't breathe")) {
+      return firstAidResponses.choking;
+    } else if (lowerCaseText.includes('break') || lowerCaseText.includes('fracture') || lowerCaseText.includes('broken')) {
+      return firstAidResponses.fracture;
+    } else if (lowerCaseText.includes('heart') || lowerCaseText.includes('chest pain')) {
+      return firstAidResponses.heart_attack;
+    } else if (lowerCaseText.includes('seizure') || lowerCaseText.includes('fit')) {
+      return firstAidResponses.seizure;
+    } else if (lowerCaseText.includes('snake')) {
+      return firstAidResponses.snake_bite;
+    } else if (lowerCaseText.includes('sprain') || lowerCaseText.includes('twisted')) {
+      return firstAidResponses.sprain;
+    } else if (lowerCaseText.includes('stroke')) {
+      return firstAidResponses.stroke;
+    } else if (lowerCaseText.includes('unconscious') || lowerCaseText.includes('passed out')) {
+      return firstAidResponses.unconscious;
+    } else if (lowerCaseText.includes('cpr') || lowerCaseText.includes('resuscitation')) {
+      return firstAidResponses.cpr;
+    } else if (lowerCaseText.includes('allerg') || lowerCaseText.includes('anaphyla')) {
+      return firstAidResponses.allergic;
     }
     
-    return responseText;
+    return firstAidResponses.default;
   };
   
   const clearMessages = () => {
