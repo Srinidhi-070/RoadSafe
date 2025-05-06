@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell } from 'lucide-react';
@@ -10,8 +9,8 @@ import { useEmergency } from '@/contexts/EmergencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Card, CardContent } from '@/components/ui/card';
-import MapView, { Location as MapLocation } from '@/components/MapView';
-import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
+import MapboxMap, { MapLocation } from '@/components/MapboxMap';
+import { useMapboxAmbulanceTracking } from '@/hooks/useMapboxAmbulanceTracking';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -26,39 +25,10 @@ const Index = () => {
     ? reports.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0]
     : null;
   
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
   
-  // Use the ambulance tracking hook to get ambulance locations - but don't start tracking
-  const { ambulanceLocations } = useAmbulanceTracking(false);
-  
-  // Get user location for map - with a fallback to avoid delay
-  useEffect(() => {
-    // Set default location immediately to prevent UI delay
-    const defaultLocation = { 
-      lat: 40.7128, 
-      lng: -74.0060 
-    };
-    
-    setUserLocation(defaultLocation);
-    
-    // Then try to get the actual location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const newLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          };
-          setUserLocation(newLocation);
-        },
-        () => {
-          toast.error("Could not get your precise location. Using default.");
-        },
-        { timeout: 3000, enableHighAccuracy: false } // Shorter timeout
-      );
-    }
-  }, []);
+  // Use the Mapbox ambulance tracking hook
+  const { ambulanceLocations, userLocation } = useMapboxAmbulanceTracking(false);
   
   // Update map locations when user location changes
   useEffect(() => {
@@ -67,8 +37,8 @@ const Index = () => {
     const newLocations: MapLocation[] = [
       {
         id: 'user',
-        lat: userLocation.lat,
-        lng: userLocation.lng,
+        longitude: userLocation.longitude,
+        latitude: userLocation.latitude,
         type: 'user',
         name: 'Your Location'
       }
@@ -83,8 +53,8 @@ const Index = () => {
     if (latestReport) {
       newLocations.push({
         id: latestReport.id,
-        lat: latestReport.location.lat,
-        lng: latestReport.location.lng,
+        longitude: latestReport.location.lng,
+        latitude: latestReport.location.lat,
         type: 'accident',
         name: 'Your Recent Accident'
       });
@@ -223,7 +193,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Latest report if exists - keeping original functionality */}
+      {/* Latest report if exists - with Mapbox map */}
       {latestReport && (
         <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
           <Card className={`border-none shadow-md ${
@@ -240,16 +210,16 @@ const Index = () => {
                 {latestReport.timestamp.toLocaleString()}
               </div>
               
-              {/* Add small map with accident location - use lazy loading */}
+              {/* Add Mapbox map with accident location */}
               {userLocation && (
                 <div className="mb-3">
-                  <MapView 
+                  <MapboxMap 
                     className="h-32 mb-2 rounded-md overflow-hidden"
                     locations={mapLocations}
                     centerLocation={userLocation}
                     zoom={11}
                     interactive={false}
-                    lazy={true} // Enable lazy loading
+                    lazy={true}
                   />
                 </div>
               )}

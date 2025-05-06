@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
-import MapView, { Location as MapLocation } from '@/components/MapView';
+import MapboxMap, { MapLocation } from '@/components/MapboxMap';
 import BottomNavigation from '@/components/BottomNavigation';
 import StatusBadge from '@/components/StatusBadge';
-import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
+import { useMapboxAmbulanceTracking } from '@/hooks/useMapboxAmbulanceTracking';
 import { toast } from 'sonner';
 
 interface Location {
@@ -16,8 +16,8 @@ interface Location {
   address: string;
   isOpen: boolean;
   coordinates: {
-    lat: number;
-    lng: number;
+    longitude: number;
+    latitude: number;
   };
 }
 
@@ -30,13 +30,9 @@ const MapScreen = () => {
   
   const [locations, setLocations] = useState<Location[]>([]);
   const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number }>({ 
-    lat: 40.7128, 
-    lng: -74.0060  // Default to NYC
-  });
   
-  // Use the ambulance tracking hook
-  const { ambulanceLocations, isTracking, toggleTracking } = useAmbulanceTracking();
+  // Use the Mapbox ambulance tracking hook
+  const { ambulanceLocations, isTracking, toggleTracking, userLocation } = useMapboxAmbulanceTracking();
   
   // Simulate loading locations - optimized to be faster
   useEffect(() => {
@@ -44,7 +40,7 @@ const MapScreen = () => {
       // Reduced timeout for faster loading
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Mock data for demo
+      // Mock data for demo - using longitude/latitude format for Mapbox
       const mockLocations: Location[] = [
         {
           id: '1',
@@ -54,8 +50,8 @@ const MapScreen = () => {
           address: '123 Main St, Cityville',
           isOpen: true,
           coordinates: {
-            lat: 40.7160,
-            lng: -74.0055
+            longitude: -74.0055,
+            latitude: 40.7160
           }
         },
         {
@@ -66,8 +62,8 @@ const MapScreen = () => {
           address: '456 Oak Ave, Cityville',
           isOpen: true,
           coordinates: {
-            lat: 40.7110,
-            lng: -74.0090
+            longitude: -74.0090,
+            latitude: 40.7110
           }
         },
         {
@@ -78,8 +74,8 @@ const MapScreen = () => {
           address: '789 Central Blvd, Cityville',
           isOpen: true,
           coordinates: {
-            lat: 40.7080,
-            lng: -74.0100
+            longitude: -74.0100,
+            latitude: 40.7080
           }
         },
         {
@@ -90,8 +86,8 @@ const MapScreen = () => {
           address: '101 Elm St, Cityville',
           isOpen: true,
           coordinates: {
-            lat: 40.7190,
-            lng: -73.9950
+            longitude: -73.9950,
+            latitude: 40.7190
           }
         }
       ];
@@ -101,20 +97,23 @@ const MapScreen = () => {
       // Convert static locations to map markers
       const staticMarkers: MapLocation[] = mockLocations.map(loc => ({
         id: loc.id,
-        lat: loc.coordinates.lat,
-        lng: loc.coordinates.lng,
+        longitude: loc.coordinates.longitude,
+        latitude: loc.coordinates.latitude,
         type: loc.type,
-        name: loc.name
+        name: loc.name,
+        distance: loc.distance
       }));
       
-      // Add user location
-      staticMarkers.push({
-        id: 'user',
-        lat: userLocation.lat,
-        lng: userLocation.lng,
-        type: 'user',
-        name: 'Your Location'
-      });
+      // Add user location if available
+      if (userLocation) {
+        staticMarkers.push({
+          id: 'user',
+          longitude: userLocation.longitude,
+          latitude: userLocation.latitude,
+          type: 'user',
+          name: 'Your Location'
+        });
+      }
       
       setMapLocations(staticMarkers);
       setIsLoading(false);
@@ -134,7 +133,7 @@ const MapScreen = () => {
     } else {
       setMapLocations(staticLocations);
     }
-  }, [ambulanceLocations, isTracking]);
+  }, [ambulanceLocations, isTracking, mapLocations]);
   
   const handleGetCurrentLocation = () => {
     toast.info('Getting your current location...');
@@ -144,10 +143,11 @@ const MapScreen = () => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const newLocation = {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
+            longitude: position.coords.longitude,
+            latitude: position.coords.latitude
           };
-          setUserLocation(newLocation);
+          // Update user location in the ambulance service
+          mapboxAmbulanceService.setUserLocation(newLocation);
           toast.success('Location updated');
         },
         () => {
@@ -168,12 +168,6 @@ const MapScreen = () => {
       setSelectedFilters([...selectedFilters, filter]);
     }
   };
-  
-  const filteredLocations = locations.filter(
-    location => 
-      selectedFilters.includes(location.type) && 
-      (searchQuery === '' || location.name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
   
   // Filter map locations based on selected filters
   const filteredMapLocations = mapLocations.filter(loc => 
@@ -291,11 +285,11 @@ const MapScreen = () => {
         </AnimatedContainer>
       )}
       
-      {/* Map - with optimized loading */}
+      {/* Map with Mapbox */}
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
         <div className="relative">
-          <MapView 
-            className="h-64 rounded-lg overflow-hidden shadow-md border" 
+          <MapboxMap 
+            className="h-64 rounded-lg overflow-hidden shadow-md border"
             locations={filteredMapLocations}
             centerLocation={userLocation}
             zoom={13}
@@ -373,8 +367,12 @@ const MapScreen = () => {
                 </div>
               </div>
             ))
-          ) : filteredLocations.length > 0 ? (
-            filteredLocations.map((location, index) => (
+          ) : (
+            locations.filter(
+              location => 
+                selectedFilters.includes(location.type) && 
+                (searchQuery === '' || location.name.toLowerCase().includes(searchQuery.toLowerCase()))
+            ).map((location, index) => (
               <AnimatedContainer 
                 key={location.id} 
                 animation="fade-in"

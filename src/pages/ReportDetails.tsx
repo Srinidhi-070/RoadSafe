@@ -1,12 +1,11 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Clock, AlertTriangle, Phone, User, Ambulance, Eye, EyeOff } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import StatusBadge from '@/components/StatusBadge';
-import MapView, { Location as MapLocation } from '@/components/MapView';
+import MapboxMap, { MapLocation } from '@/components/MapboxMap';
 import { useEmergency } from '@/contexts/EmergencyContext';
-import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
+import { useMapboxAmbulanceTracking } from '@/hooks/useMapboxAmbulanceTracking';
 import { toast } from 'sonner';
 
 const ReportDetails = () => {
@@ -17,13 +16,14 @@ const ReportDetails = () => {
   const [isLoadingMap, setIsLoadingMap] = useState(true);
   const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
   
-  // Use the ambulance tracking hook
+  // Use the Mapbox ambulance tracking hook
   const { 
     ambulanceLocations, 
     isTracking, 
     toggleTracking, 
-    dispatchAmbulanceToLocation 
-  } = useAmbulanceTracking();
+    dispatchAmbulanceToLocation,
+    userLocation
+  } = useMapboxAmbulanceTracking();
   
   useEffect(() => {
     // Simulate map loading
@@ -41,7 +41,11 @@ const ReportDetails = () => {
   useEffect(() => {
     if (report && responses.length === 0) {
       // Try to dispatch an ambulance
-      const ambulanceId = dispatchAmbulanceToLocation(report.id, report.location);
+      const ambulanceId = dispatchAmbulanceToLocation(report.id, {
+        latitude: report.location.lat,
+        longitude: report.location.lng,
+        address: report.location.address
+      });
       if (ambulanceId) {
         toast.success("Ambulance dispatched to your location");
       }
@@ -55,31 +59,31 @@ const ReportDetails = () => {
     const newLocations: MapLocation[] = [
       {
         id: report.id,
-        lat: report.location.lat,
-        lng: report.location.lng,
+        latitude: report.location.lat,
+        longitude: report.location.lng,
         type: 'accident',
         name: 'Accident Location'
       }
     ];
     
-    // Add responder locations if any
-    responses.forEach(response => {
-      if (response.responderInfo) {
-        // In a real app, responders would have real coordinates
-        // For now, we'll use the simulated ambulance locations
-        // We don't add them here because they come from ambulanceLocations
-      }
-    });
+    // Add user location if available
+    if (userLocation) {
+      newLocations.push({
+        id: 'user',
+        latitude: userLocation.latitude,
+        longitude: userLocation.longitude,
+        type: 'user',
+        name: 'Your Location'
+      });
+    }
     
     // Add real-time ambulance locations if tracking is enabled
     if (isTracking) {
-      // Filter only ambulances related to this report (in real app)
-      // For now, we'll add all tracked ambulances
       setMapLocations([...newLocations, ...ambulanceLocations]);
     } else {
       setMapLocations(newLocations);
     }
-  }, [report, responses, ambulanceLocations, isTracking]);
+  }, [report, responses, ambulanceLocations, isTracking, userLocation]);
   
   if (!report) {
     return (
@@ -155,7 +159,7 @@ const ReportDetails = () => {
         </div>
       </AnimatedContainer>
       
-      {/* Map section */}
+      {/* Map section with Mapbox */}
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -180,10 +184,13 @@ const ReportDetails = () => {
           
           {report && (
             <div className="relative">
-              <MapView 
+              <MapboxMap 
                 className={`h-56 ${isLoadingMap ? 'animate-pulse' : ''}`}
                 locations={mapLocations}
-                centerLocation={report.location}
+                centerLocation={report.location.lng ? 
+                  { longitude: report.location.lng, latitude: report.location.lat } : 
+                  undefined
+                }
                 zoom={14}
               />
               
