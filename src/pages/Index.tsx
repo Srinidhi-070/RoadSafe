@@ -197,13 +197,9 @@ const Index = () => {
         ))}
       </div>
       
-      {/* Stats section */}
-      <div className="flex justify-between mb-8">
-        <div className={`${cardBgClass} p-4 rounded-xl flex-1 mr-2`}>
-          <div className={`${mutedTextClass} text-sm`}>Accident-free for</div>
-          <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-teal-400' : 'text-teal-600'}`}>32 days</div>
-        </div>
-        <div className={`${cardBgClass} p-4 rounded-xl flex-1 ml-2`}>
+      {/* Stats section - REMOVING the accident-free panel and keeping only the ambulance response time panel */}
+      <div className="flex justify-center mb-8">
+        <div className={`${cardBgClass} p-4 rounded-xl w-full`}>
           <div className={`${mutedTextClass} text-sm`}>Ambulance response time</div>
           <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}>5 min</div>
         </div>
