@@ -11,6 +11,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Card, CardContent } from '@/components/ui/card';
 import MapView, { Location as MapLocation } from '@/components/MapView';
 import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
+import EmergencyContacts from '@/components/EmergencyContacts';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -28,8 +29,8 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
   
-  // Use the ambulance tracking hook to get ambulance locations - but don't start tracking
-  const { ambulanceLocations } = useAmbulanceTracking(false);
+  // Use the ambulance tracking hook - ENABLED by default now
+  const { ambulanceLocations } = useAmbulanceTracking(true);
   
   // Get user location for map - with a fallback to avoid delay
   useEffect(() => {
@@ -163,6 +164,29 @@ const Index = () => {
           <Bell className={`h-5 w-5 ${textClass}`} />
         </button>
       </div>
+      
+      {/* Live map with ambulance tracking */}
+      <AnimatedContainer animation="fade-in" delay={100} className="mb-6">
+        <div className="relative rounded-xl overflow-hidden shadow-md">
+          <MapView 
+            className="h-48"
+            locations={mapLocations}
+            centerLocation={userLocation || undefined}
+            zoom={12}
+          />
+          {ambulanceLocations.length > 0 && (
+            <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full flex items-center">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+              Live Tracking
+            </div>
+          )}
+        </div>
+      </AnimatedContainer>
+      
+      {/* Emergency contacts - NEW */}
+      <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
+        <EmergencyContacts />
+      </AnimatedContainer>
       
       {/* Quick action cards in grid layout */}
       <div className="grid grid-cols-2 gap-4 mb-8">
