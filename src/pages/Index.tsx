@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell } from 'lucide-react';
 import ActionCard from '@/components/ActionCard';
@@ -11,7 +11,6 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { Card, CardContent } from '@/components/ui/card';
 import MapView, { Location as MapLocation } from '@/components/MapView';
 import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
-import EmergencyContacts from '@/components/EmergencyContacts';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -29,8 +28,8 @@ const Index = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
   
-  // Use the ambulance tracking hook - ENABLED by default now
-  const { ambulanceLocations } = useAmbulanceTracking(true);
+  // Use the ambulance tracking hook to get ambulance locations - but don't start tracking
+  const { ambulanceLocations } = useAmbulanceTracking(false);
   
   // Get user location for map - with a fallback to avoid delay
   useEffect(() => {
@@ -58,9 +57,9 @@ const Index = () => {
         { timeout: 3000, enableHighAccuracy: false } // Shorter timeout
       );
     }
-  }, []); // Empty dependency array - only run once on mount
+  }, []);
   
-  // Update map locations when user location or ambulance locations change
+  // Update map locations when user location changes
   useEffect(() => {
     if (!userLocation) return;
     
@@ -91,7 +90,7 @@ const Index = () => {
     }
     
     setMapLocations(newLocations);
-  }, [userLocation, ambulanceLocations, latestReport]); // Only update when these dependencies change
+  }, [userLocation, ambulanceLocations, latestReport]);
 
   const quickActions = [
     {
@@ -165,29 +164,6 @@ const Index = () => {
         </button>
       </div>
       
-      {/* Live map with ambulance tracking */}
-      <AnimatedContainer animation="fade-in" delay={100} className="mb-6">
-        <div className="relative rounded-xl overflow-hidden shadow-md">
-          <MapView 
-            className="h-48"
-            locations={mapLocations}
-            centerLocation={userLocation || undefined}
-            zoom={12}
-          />
-          {ambulanceLocations.length > 0 && (
-            <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full flex items-center">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-              Live Tracking
-            </div>
-          )}
-        </div>
-      </AnimatedContainer>
-      
-      {/* Emergency contacts - NEW */}
-      <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
-        <EmergencyContacts />
-      </AnimatedContainer>
-      
       {/* Quick action cards in grid layout */}
       <div className="grid grid-cols-2 gap-4 mb-8">
         {quickActions.map((action, index) => (
@@ -221,9 +197,13 @@ const Index = () => {
         ))}
       </div>
       
-      {/* Stats section - REMOVING the accident-free panel and keeping only the ambulance response time panel */}
-      <div className="flex justify-center mb-8">
-        <div className={`${cardBgClass} p-4 rounded-xl w-full`}>
+      {/* Stats section */}
+      <div className="flex justify-between mb-8">
+        <div className={`${cardBgClass} p-4 rounded-xl flex-1 mr-2`}>
+          <div className={`${mutedTextClass} text-sm`}>Accident-free for</div>
+          <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-teal-400' : 'text-teal-600'}`}>32 days</div>
+        </div>
+        <div className={`${cardBgClass} p-4 rounded-xl flex-1 ml-2`}>
           <div className={`${mutedTextClass} text-sm`}>Ambulance response time</div>
           <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}>5 min</div>
         </div>
