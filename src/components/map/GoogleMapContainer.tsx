@@ -33,12 +33,6 @@ const GoogleMapContainer: React.FC<GoogleMapContainerProps> = ({
     mapRef.current = null;
   }, []);
 
-  // Handle map load error
-  const onMapLoadError = useCallback((error: Error) => {
-    console.error("Map loading error:", error);
-    setMapLoadError(true);
-  }, []);
-
   // Handle click on marker
   const handleMarkerClick = (location: Location) => {
     setSelectedMarker(location);
@@ -60,6 +54,7 @@ const GoogleMapContainer: React.FC<GoogleMapContainerProps> = ({
         mapRef.current.fitBounds(bounds, 50); // 50px padding
       } catch (error) {
         console.error("Error fitting bounds:", error);
+        setMapLoadError(true);
       }
     }
   }, [locations]);
@@ -85,7 +80,6 @@ const GoogleMapContainer: React.FC<GoogleMapContainerProps> = ({
       zoom={zoom}
       onLoad={onLoad}
       onUnmount={onUnmount}
-      onError={onMapLoadError}
       options={{
         disableDefaultUI: !interactive,
         scrollwheel: interactive,
