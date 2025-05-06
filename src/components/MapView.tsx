@@ -12,6 +12,10 @@ import type { Location } from './map/MapMarker';
 // Re-export Location type to maintain compatibility
 export type { Location } from './map/MapMarker';
 
+// Create a default Google Maps API key for testing/development
+// In production, users should provide their own key
+const DEFAULT_API_KEY = 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
+
 interface MapViewProps {
   className?: string;
   locations?: Location[];
@@ -29,7 +33,7 @@ const MapView: React.FC<MapViewProps> = ({
   zoom = 12,
   interactive = true,
   lazy = false,
-  apiKey = '' // Default to empty string
+  apiKey = DEFAULT_API_KEY // Use default key if none provided
 }) => {
   const [userApiKey, setUserApiKey] = useState<string>(apiKey);
   const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(!apiKey);
@@ -58,7 +62,7 @@ const MapView: React.FC<MapViewProps> = ({
     };
   }, [lazy, shouldInitialize]);
 
-  // Load Google Maps API
+  // Load Google Maps API - with consistent API key
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: userApiKey,
