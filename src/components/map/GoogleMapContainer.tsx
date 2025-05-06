@@ -1,5 +1,5 @@
 
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleMap } from '@react-google-maps/api';
 import MapMarker, { Location } from './MapMarker';
 
@@ -21,6 +21,7 @@ const GoogleMapContainer: React.FC<GoogleMapContainerProps> = ({
   setSelectedMarker
 }) => {
   const mapRef = useRef<google.maps.Map | null>(null);
+  const [mapLoadError, setMapLoadError] = useState<boolean>(false);
   
   // Handle map load
   const onLoad = useCallback((map: google.maps.Map) => {
@@ -30,6 +31,12 @@ const GoogleMapContainer: React.FC<GoogleMapContainerProps> = ({
   // Handle map unmount
   const onUnmount = useCallback(() => {
     mapRef.current = null;
+  }, []);
+
+  // Handle map load error
+  const onMapLoadError = useCallback((error: Error) => {
+    console.error("Map loading error:", error);
+    setMapLoadError(true);
   }, []);
 
   // Handle click on marker
@@ -45,13 +52,28 @@ const GoogleMapContainer: React.FC<GoogleMapContainerProps> = ({
   // Fit bounds to include all markers
   useEffect(() => {
     if (mapRef.current && locations.length > 1) {
-      const bounds = new google.maps.LatLngBounds();
-      locations.forEach(location => {
-        bounds.extend(new google.maps.LatLng(location.lat, location.lng));
-      });
-      mapRef.current.fitBounds(bounds, 50); // 50px padding
+      try {
+        const bounds = new google.maps.LatLngBounds();
+        locations.forEach(location => {
+          bounds.extend(new google.maps.LatLng(location.lat, location.lng));
+        });
+        mapRef.current.fitBounds(bounds, 50); // 50px padding
+      } catch (error) {
+        console.error("Error fitting bounds:", error);
+      }
     }
   }, [locations]);
+
+  if (mapLoadError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-muted/20">
+        <div className="text-center p-4">
+          <p className="text-destructive">Map failed to load</p>
+          <p className="text-sm text-muted-foreground mt-2">Please try again later</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <GoogleMap
@@ -63,6 +85,7 @@ const GoogleMapContainer: React.FC<GoogleMapContainerProps> = ({
       zoom={zoom}
       onLoad={onLoad}
       onUnmount={onUnmount}
+      onError={onMapLoadError}
       options={{
         disableDefaultUI: !interactive,
         scrollwheel: interactive,

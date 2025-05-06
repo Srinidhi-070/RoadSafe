@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell } from 'lucide-react';
 import ActionCard from '@/components/ActionCard';
@@ -58,9 +58,9 @@ const Index = () => {
         { timeout: 3000, enableHighAccuracy: false } // Shorter timeout
       );
     }
-  }, []);
+  }, []); // Empty dependency array - only run once on mount
   
-  // Update map locations when user location changes
+  // Update map locations when user location or ambulance locations change
   useEffect(() => {
     if (!userLocation) return;
     
@@ -91,7 +91,7 @@ const Index = () => {
     }
     
     setMapLocations(newLocations);
-  }, [userLocation, ambulanceLocations, latestReport]);
+  }, [userLocation, ambulanceLocations, latestReport]); // Only update when these dependencies change
 
   const quickActions = [
     {
