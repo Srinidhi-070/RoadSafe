@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell } from 'lucide-react';
@@ -197,11 +198,11 @@ const Index = () => {
         ))}
       </div>
       
-      {/* Stats section */}
+      {/* Stats section - Replacing the accident-free card with something more relevant */}
       <div className="flex justify-between mb-8">
         <div className={`${cardBgClass} p-4 rounded-xl flex-1 mr-2`}>
-          <div className={`${mutedTextClass} text-sm`}>Accident-free for</div>
-          <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-teal-400' : 'text-teal-600'}`}>32 days</div>
+          <div className={`${mutedTextClass} text-sm`}>Available Emergency Services</div>
+          <div className={`text-2xl font-bold ${theme === 'dark' ? 'text-teal-400' : 'text-teal-600'}`}>3 nearby</div>
         </div>
         <div className={`${cardBgClass} p-4 rounded-xl flex-1 ml-2`}>
           <div className={`${mutedTextClass} text-sm`}>Ambulance response time</div>
