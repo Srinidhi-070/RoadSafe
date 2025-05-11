@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter } from 'lucide-react';
@@ -372,56 +373,62 @@ const MapScreen = () => {
               location => 
                 selectedFilters.includes(location.type) && 
                 (searchQuery === '' || location.name.toLowerCase().includes(searchQuery.toLowerCase()))
-            ).map((location, index) => (
-              <AnimatedContainer 
-                key={location.id} 
-                animation="fade-in"
-                delay={400 + (index * 100)}
-                className="bg-card border rounded-lg p-4 hover:border-primary/40 transition-colors"
-              >
-                <div className="flex items-start">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                    location.type === 'hospital' ? 'bg-primary/10 text-primary' : 
-                    location.type === 'ambulance' ? 'bg-info/10 text-info' :
-                    location.type === 'police' ? 'bg-primary/10 text-primary' :
-                    'bg-emergency/10 text-emergency'
-                  }`}>
-                    {location.type === 'hospital' && <Hospital className="h-5 w-5" />}
-                    {location.type === 'ambulance' && <Ambulance className="h-5 w-5" />}
-                    {location.type === 'police' && <ShieldIcon className="h-5 w-5" />}
-                    {location.type === 'fire' && <FlameIcon className="h-5 w-5" />}
-                  </div>
-                  
-                  <div className="ml-3 flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-medium truncate">{location.name}</h3>
-                      <span className="text-sm font-medium ml-2 flex-shrink-0">
-                        {location.distance.toFixed(1)} km
-                      </span>
+            ).length > 0 ? (
+              locations.filter(
+                location => 
+                  selectedFilters.includes(location.type) && 
+                  (searchQuery === '' || location.name.toLowerCase().includes(searchQuery.toLowerCase()))
+              ).map((location, index) => (
+                <AnimatedContainer 
+                  key={location.id} 
+                  animation="fade-in"
+                  delay={400 + (index * 100)}
+                  className="bg-card border rounded-lg p-4 hover:border-primary/40 transition-colors"
+                >
+                  <div className="flex items-start">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                      location.type === 'hospital' ? 'bg-primary/10 text-primary' : 
+                      location.type === 'ambulance' ? 'bg-info/10 text-info' :
+                      location.type === 'police' ? 'bg-primary/10 text-primary' :
+                      'bg-emergency/10 text-emergency'
+                    }`}>
+                      {location.type === 'hospital' && <Hospital className="h-5 w-5" />}
+                      {location.type === 'ambulance' && <Ambulance className="h-5 w-5" />}
+                      {location.type === 'police' && <ShieldIcon className="h-5 w-5" />}
+                      {location.type === 'fire' && <FlameIcon className="h-5 w-5" />}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1 flex items-center">
-                      <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">{location.address}</span>
-                    </p>
-                    <div className="mt-2 flex justify-between items-center">
-                      {location.isOpen ? (
-                        <span className="text-xs text-success">Open 24/7</span>
-                      ) : (
-                        <span className="text-xs text-destructive">Closed</span>
-                      )}
-                      <button className="text-xs text-primary hover:underline">
-                        Get directions
-                      </button>
+                    
+                    <div className="ml-3 flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-medium truncate">{location.name}</h3>
+                        <span className="text-sm font-medium ml-2 flex-shrink-0">
+                          {location.distance.toFixed(1)} km
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1 flex items-center">
+                        <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                        <span className="truncate">{location.address}</span>
+                      </p>
+                      <div className="mt-2 flex justify-between items-center">
+                        {location.isOpen ? (
+                          <span className="text-xs text-success">Open 24/7</span>
+                        ) : (
+                          <span className="text-xs text-destructive">Closed</span>
+                        )}
+                        <button className="text-xs text-primary hover:underline">
+                          Get directions
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </AnimatedContainer>
-            ))
-          ) : (
-            <div className="text-center py-10 text-muted-foreground">
-              <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              <p>No services found matching your filters</p>
-            </div>
+                </AnimatedContainer>
+              ))
+            ) : (
+              <div className="text-center py-10 text-muted-foreground">
+                <MapPin className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p>No services found matching your filters</p>
+              </div>
+            )
           )}
         </div>
       </AnimatedContainer>
