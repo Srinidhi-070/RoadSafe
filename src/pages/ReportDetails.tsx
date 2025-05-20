@@ -1,89 +1,45 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, AlertTriangle, Phone, User, Ambulance, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Clock, AlertTriangle, Phone, User, Ambulance, Map, History } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import StatusBadge from '@/components/StatusBadge';
-import MapboxMap, { MapLocation } from '@/components/MapboxMap';
 import { useEmergency } from '@/contexts/EmergencyContext';
-import { useMapboxAmbulanceTracking } from '@/hooks/useMapboxAmbulanceTracking';
 import { toast } from 'sonner';
+import AmbulanceMap from '@/components/AmbulanceMap';
+import { useAmbulanceTracking } from '@/services/AmbulanceTrackingService';
 
 const ReportDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getReportById, getResponsesForReport } = useEmergency();
   
-  const [isLoadingMap, setIsLoadingMap] = useState(true);
-  const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
-  
-  // Use the Mapbox ambulance tracking hook
+  // Use the Ambulance tracking hook
   const { 
     ambulanceLocations, 
-    isTracking, 
-    toggleTracking, 
     dispatchAmbulanceToLocation,
-    userLocation
-  } = useMapboxAmbulanceTracking();
-  
-  useEffect(() => {
-    // Simulate map loading
-    const timer = setTimeout(() => {
-      setIsLoadingMap(false);
-    }, 1500);
-    
-    return () => clearTimeout(timer);
-  }, []);
+    getActiveAmbulance
+  } = useAmbulanceTracking();
   
   const report = id ? getReportById(id) : undefined;
   const responses = id ? getResponsesForReport(id) : [];
+  const activeAmbulance = getActiveAmbulance();
   
   // Automatically dispatch an ambulance if there's a report but no ambulance assigned
   useEffect(() => {
-    if (report && responses.length === 0) {
+    if (report && responses.length === 0 && !activeAmbulance) {
       // Try to dispatch an ambulance
       const ambulanceId = dispatchAmbulanceToLocation(report.id, {
         latitude: report.location.lat,
         longitude: report.location.lng,
         address: report.location.address
       });
+      
       if (ambulanceId) {
         toast.success("Ambulance dispatched to your location");
       }
     }
-  }, [report, responses.length, dispatchAmbulanceToLocation]);
-  
-  // Create map locations when report or ambulances change
-  useEffect(() => {
-    if (!report) return;
-    
-    const newLocations: MapLocation[] = [
-      {
-        id: report.id,
-        latitude: report.location.lat,
-        longitude: report.location.lng,
-        type: 'accident',
-        name: 'Accident Location'
-      }
-    ];
-    
-    // Add user location if available
-    if (userLocation) {
-      newLocations.push({
-        id: 'user',
-        latitude: userLocation.latitude,
-        longitude: userLocation.longitude,
-        type: 'user',
-        name: 'Your Location'
-      });
-    }
-    
-    // Add real-time ambulance locations if tracking is enabled
-    if (isTracking) {
-      setMapLocations([...newLocations, ...ambulanceLocations]);
-    } else {
-      setMapLocations(newLocations);
-    }
-  }, [report, responses, ambulanceLocations, isTracking, userLocation]);
+  }, [report, responses.length, dispatchAmbulanceToLocation, activeAmbulance]);
   
   if (!report) {
     return (
@@ -159,53 +115,26 @@ const ReportDetails = () => {
         </div>
       </AnimatedContainer>
       
-      {/* Map section with Mapbox */}
+      {/* Map section with Ambulance Map */}
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-medium">Accident Location</h2>
+            <h2 className="font-medium">Ambulance Tracking</h2>
             <button 
-              onClick={toggleTracking}
+              onClick={() => navigate('/map')}
               className="flex items-center text-xs bg-muted px-2 py-1 rounded-full"
             >
-              {isTracking ? (
-                <>
-                  <Eye className="h-3 w-3 mr-1" />
-                  <span>Live Tracking</span>
-                </>
-              ) : (
-                <>
-                  <EyeOff className="h-3 w-3 mr-1" />
-                  <span>Tracking Off</span>
-                </>
-              )}
+              <Map className="h-3 w-3 mr-1" />
+              <span>View full map</span>
             </button>
           </div>
           
-          {report && (
-            <div className="relative">
-              <MapboxMap 
-                className={`h-56 ${isLoadingMap ? 'animate-pulse' : ''}`}
-                locations={mapLocations}
-                centerLocation={report.location.lng ? 
-                  { longitude: report.location.lng, latitude: report.location.lat } : 
-                  undefined
-                }
-                zoom={14}
-              />
-              
-              {isTracking && (
-                <div className="absolute top-2 right-2 bg-background/90 text-xs px-2 py-1 rounded flex items-center">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-                  Live
-                </div>
-              )}
-            </div>
-          )}
-          <div className="flex items-center text-sm text-muted-foreground mt-2">
-            <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
-            {report?.location.address || 'Location coordinates recorded'}
-          </div>
+          <AmbulanceMap 
+            className="h-64"
+            reportLocation={report.location}
+            showTracking={true}
+            showControls={true}
+          />
         </div>
       </AnimatedContainer>
       
@@ -252,12 +181,12 @@ const ReportDetails = () => {
                   </div>
                 )}
                 
-                {response.eta !== undefined && (
+                {activeAmbulance && activeAmbulance.eta !== undefined && (
                   <div className="bg-primary/10 rounded-md p-3">
                     <div className="flex items-center">
                       <Clock className="h-4 w-4 mr-2 text-primary" />
                       <span className="text-sm font-medium text-primary">
-                        Estimated arrival in {response.eta} minutes
+                        Estimated arrival in {activeAmbulance.eta} minutes
                       </span>
                     </div>
                   </div>
@@ -274,6 +203,38 @@ const ReportDetails = () => {
               </div>
             </div>
           )}
+
+          {/* Recent dispatch history */}
+          <div className="mt-4">
+            <div className="flex items-center text-sm mb-2">
+              <History className="h-4 w-4 mr-1 text-muted-foreground" />
+              <h3 className="font-medium">Recent Updates</h3>
+            </div>
+            <div className="space-y-2">
+              {activeAmbulance ? (
+                <div className="text-xs space-y-2 border-l-2 border-info/30 pl-3 py-1">
+                  <div className="flex justify-between">
+                    <span>Ambulance {activeAmbulance.callSign} dispatched</span>
+                    <span className="text-muted-foreground">2 min ago</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Ambulance en route to location</span>
+                    <span className="text-muted-foreground">1 min ago</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-success">
+                      ETA: {activeAmbulance.eta} minutes
+                    </span>
+                    <span className="text-muted-foreground">Just now</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground italic">
+                  No updates yet
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </AnimatedContainer>
       

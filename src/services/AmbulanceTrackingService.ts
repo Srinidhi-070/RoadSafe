@@ -1,179 +1,395 @@
 
-// Simulates real-time ambulance location updates
-import { Location } from '@/components/MapView';
+import { toast } from 'sonner';
+import type { MapLocation } from '@/components/MapboxMap';
+import { mapService } from './MapService';
 
 export interface AmbulanceVehicle {
   id: string;
   callSign: string;
-  lat: number;
-  lng: number;
-  status: 'enroute' | 'arrived' | 'waiting' | 'dispatched' | 'completed';
-  speed: number; // in km/h
-  heading: number; // in degrees, 0 is north
-  destination?: {
-    lat: number;
-    lng: number;
-    address?: string;
-  };
-  reportId?: string;
+  longitude: number;
+  latitude: number;
+  status: 'enroute' | 'arrived' | 'waiting' | 'dispatched';
+  speed: number; // km/h
+  distance: number; // km to user
+  eta: number; // minutes
 }
 
 class AmbulanceTrackingService {
   private ambulances: AmbulanceVehicle[] = [];
-  private listeners: ((ambulances: AmbulanceVehicle[]) => void)[] = [];
-  private updateInterval: number | null = null;
-  
+  private isTracking: boolean = false;
+  private interval: NodeJS.Timeout | null = null;
+  private subscribers: ((ambulances: AmbulanceVehicle[]) => void)[] = [];
+  private userLocation: { longitude: number, latitude: number } = { longitude: -74.0060, latitude: 40.7128 };
+  private targetLocation: { longitude: number, latitude: number } | null = null;
+
   constructor() {
-    // Initialize with some mock ambulances
+    // Initialize with some ambulances
+    this.createInitialAmbulances();
+  }
+
+  private createInitialAmbulances() {
+    const { longitude, latitude } = this.userLocation;
     this.ambulances = [
       {
         id: 'amb-1',
         callSign: 'Alpha-12',
-        lat: 40.7138,
-        lng: -74.0030,
-        status: 'dispatched',
-        speed: 0,
-        heading: 0
+        longitude: longitude + 0.015,
+        latitude: latitude + 0.008,
+        status: 'enroute',
+        speed: 45,
+        distance: 1.7,
+        eta: 4
       },
       {
         id: 'amb-2',
         callSign: 'Bravo-45',
-        lat: 40.7180,
-        lng: -74.0080,
+        longitude: longitude - 0.02,
+        latitude: latitude - 0.015,
         status: 'waiting',
         speed: 0,
-        heading: 90
+        distance: 2.5,
+        eta: 8
+      },
+      {
+        id: 'amb-3',
+        callSign: 'Delta-78',
+        longitude: longitude + 0.04,
+        latitude: latitude - 0.03,
+        status: 'dispatched',
+        speed: 20,
+        distance: 4.8,
+        eta: 11
       }
     ];
   }
-  
-  // Start simulating ambulance movement at regular intervals
-  startTracking() {
-    if (this.updateInterval) return;
-    
-    this.updateInterval = window.setInterval(() => {
-      this.updateAmbulancePositions();
-    }, 1000);
+
+  setUserLocation(location: { longitude: number, latitude: number }) {
+    this.userLocation = location;
+    // Update ambulance distances based on new user location
+    this.updateDistances();
   }
-  
-  // Stop simulating
-  stopTracking() {
-    if (this.updateInterval) {
-      window.clearInterval(this.updateInterval);
-      this.updateInterval = null;
+
+  setTargetLocation(location: { longitude: number, latitude: number } | null) {
+    this.targetLocation = location;
+    // Recalculate routes if target location changes
+    if (location) {
+      this.updateDistances();
     }
   }
-  
-  // Subscribe to ambulance updates
+
+  private updateDistances() {
+    this.ambulances = this.ambulances.map(ambulance => {
+      // Determine which location to calculate distance to
+      const targetLoc = this.targetLocation || this.userLocation;
+      
+      // Calculate distance using Haversine formula
+      const distance = this.calculateDistance(
+        ambulance.longitude, 
+        ambulance.latitude,
+        targetLoc.longitude,
+        targetLoc.latitude
+      );
+      
+      // Update ETA based on distance and speed
+      const eta = ambulance.speed > 0 ? Math.ceil((distance / ambulance.speed) * 60) : 999;
+      
+      return {
+        ...ambulance,
+        distance,
+        eta
+      };
+    });
+  }
+
+  private calculateDistance(
+    lon1: number, 
+    lat1: number, 
+    lon2: number, 
+    lat2: number
+  ): number {
+    // Haversine formula for more accurate distance calculation
+    const R = 6371; // Radius of the earth in km
+    const dLat = this.deg2rad(lat2 - lat1);
+    const dLon = this.deg2rad(lon2 - lon1);
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2)
+    ; 
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    const distance = R * c; // Distance in km
+    return distance;
+  }
+
+  private deg2rad(deg: number) {
+    return deg * (Math.PI/180);
+  }
+
   subscribe(callback: (ambulances: AmbulanceVehicle[]) => void) {
-    this.listeners.push(callback);
-    // Immediately send current state
-    callback([...this.ambulances]);
+    this.subscribers.push(callback);
     
+    // Immediately call the callback with current ambulances
+    callback(this.ambulances);
+    
+    // Return unsubscribe function
     return () => {
-      this.listeners = this.listeners.filter(cb => cb !== callback);
+      this.subscribers = this.subscribers.filter(cb => cb !== callback);
     };
   }
-  
-  // Convert ambulances to map location format
-  getAmbulancesAsMapLocations(): Location[] {
-    return this.ambulances.map(ambulance => ({
-      id: ambulance.id,
-      lat: ambulance.lat,
-      lng: ambulance.lng,
-      type: 'ambulance',
-      status: ambulance.status,
-      name: `Ambulance ${ambulance.callSign} (${ambulance.speed} km/h)`
-    }));
+
+  startTracking() {
+    if (this.isTracking) return;
+    
+    this.isTracking = true;
+    
+    // Update ambulance positions periodically
+    this.interval = setInterval(() => {
+      this.updateAmbulancePositions();
+      this.notifySubscribers();
+    }, 2000);
   }
-  
-  // Get a specific ambulance by ID
-  getAmbulanceById(id: string): AmbulanceVehicle | undefined {
-    return this.ambulances.find(amb => amb.id === id);
+
+  stopTracking() {
+    if (!this.isTracking) return;
+    
+    this.isTracking = false;
+    
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
   }
-  
-  // Dispatch an ambulance to a specific location
-  dispatchAmbulance(reportId: string, destination: { lat: number, lng: number, address?: string }) {
+
+  private updateAmbulancePositions() {
+    this.ambulances = this.ambulances.map(ambulance => {
+      if (ambulance.status === 'waiting' || ambulance.status === 'arrived') {
+        return ambulance;
+      }
+      
+      // Use target location if available, otherwise use user location
+      const targetLoc = this.targetLocation || this.userLocation;
+      
+      // Moving ambulances should get closer to the target
+      const moveFactor = ambulance.status === 'enroute' ? 0.0005 : 0.0002;
+      
+      // Update coordinates to move toward target
+      const newLongitude = ambulance.longitude + (targetLoc.longitude - ambulance.longitude) * moveFactor;
+      const newLatitude = ambulance.latitude + (targetLoc.latitude - ambulance.latitude) * moveFactor;
+      
+      // Calculate new distance
+      const newDistance = this.calculateDistance(
+        newLongitude,
+        newLatitude,
+        targetLoc.longitude,
+        targetLoc.latitude
+      );
+      
+      // If very close to destination and enroute, mark as arrived
+      const newStatus = ambulance.status === 'enroute' && newDistance < 0.1
+        ? 'arrived' 
+        : ambulance.status;
+      
+      // Update speed - slowing down when approaching
+      const newSpeed = newStatus === 'arrived' 
+        ? 0
+        : ambulance.status === 'enroute'
+          ? Math.max(10, 45 - (1.7 - newDistance) * 30)
+          : 20;
+      
+      // Calculate eta based on speed and distance
+      const eta = newSpeed > 0 ? Math.ceil((newDistance / newSpeed) * 60) : 0;
+      
+      return {
+        ...ambulance,
+        longitude: newLongitude,
+        latitude: newLatitude,
+        status: newStatus,
+        speed: newSpeed,
+        distance: newDistance,
+        eta
+      };
+    });
+  }
+
+  private notifySubscribers() {
+    this.subscribers.forEach(callback => {
+      callback(this.ambulances);
+    });
+  }
+
+  dispatchAmbulance(reportId: string, destination: { longitude: number; latitude: number; address?: string }) {
     // Find an available ambulance
-    const availableAmbulance = this.ambulances.find(amb => 
-      amb.status === 'waiting' || !amb.reportId
-    );
+    const availableAmbulance = this.ambulances.find(a => a.status === 'waiting');
     
     if (availableAmbulance) {
-      availableAmbulance.status = 'dispatched';
-      availableAmbulance.destination = destination;
-      availableAmbulance.reportId = reportId;
+      // Set the target location
+      this.setTargetLocation(destination);
       
-      // Calculate heading toward destination
-      const deltaLng = destination.lng - availableAmbulance.lng;
-      const deltaLat = destination.lat - availableAmbulance.lat;
-      availableAmbulance.heading = Math.atan2(deltaLng, deltaLat) * (180 / Math.PI);
+      // Update the ambulance status
+      const updatedAmbulance = {
+        ...availableAmbulance,
+        status: 'dispatched' as const,
+        speed: 20,
+        // Calculate initial distance
+        distance: this.calculateDistance(
+          availableAmbulance.longitude,
+          availableAmbulance.latitude,
+          destination.longitude,
+          destination.latitude
+        )
+      };
       
-      // Notify listeners of the update
-      this.notifyListeners();
+      // Calculate initial ETA
+      updatedAmbulance.eta = updatedAmbulance.speed > 0 
+        ? Math.ceil((updatedAmbulance.distance / updatedAmbulance.speed) * 60) 
+        : 999;
       
-      return availableAmbulance.id;
+      // Update the ambulance
+      this.ambulances = this.ambulances.map(a => 
+        a.id === updatedAmbulance.id ? updatedAmbulance : a
+      );
+      
+      // After a short delay, change to enroute
+      setTimeout(() => {
+        this.ambulances = this.ambulances.map(a => 
+          a.id === updatedAmbulance.id 
+            ? { ...a, status: 'enroute', speed: 45 } 
+            : a
+        );
+        this.notifySubscribers();
+      }, 5000);
+      
+      // Notify subscribers
+      this.notifySubscribers();
+      
+      // Start tracking if not already tracking
+      if (!this.isTracking) {
+        this.startTracking();
+      }
+      
+      // Return the ambulance id
+      return updatedAmbulance.id;
     }
     
     return null;
   }
-  
-  // Simulate movement of all ambulances
-  private updateAmbulancePositions() {
-    const updatedAmbulances = this.ambulances.map(ambulance => {
-      // Only move ambulances that are dispatched or en route
-      if (ambulance.status !== 'dispatched' && ambulance.status !== 'enroute') {
-        return ambulance;
-      }
-      
-      if (ambulance.status === 'dispatched') {
-        // Accelerate when first dispatched
-        ambulance.speed = Math.min(ambulance.speed + 5, 60);
-        ambulance.status = 'enroute';
-      }
-      
-      if (!ambulance.destination) {
-        // No destination, slow down
-        ambulance.speed = Math.max(ambulance.speed - 5, 0);
-        return ambulance;
-      }
-      
-      // Calculate distance to destination
-      const deltaLat = ambulance.destination.lat - ambulance.lat;
-      const deltaLng = ambulance.destination.lng - ambulance.lng;
-      const distance = Math.sqrt(deltaLat * deltaLat + deltaLng * deltaLng);
-      
-      // If close to destination, slow down and eventually arrive
-      if (distance < 0.0005) { // Really close
-        ambulance.status = 'arrived';
-        ambulance.speed = 0;
-        return ambulance;
-      } else if (distance < 0.002) { // Getting close, slow down
-        ambulance.speed = Math.max(ambulance.speed - 3, 10);
-      }
-      
-      // Move toward destination
-      const moveFactor = (ambulance.speed / 3600) * 0.009; // Convert km/h to appropriate coordinate change
-      
-      // Update position based on heading
-      const radianHeading = ambulance.heading * (Math.PI / 180);
-      ambulance.lat += Math.cos(radianHeading) * moveFactor;
-      ambulance.lng += Math.sin(radianHeading) * moveFactor;
-      
-      return ambulance;
-    });
-    
-    this.ambulances = updatedAmbulances;
-    this.notifyListeners();
+
+  getAmbulanceLocations(): MapLocation[] {
+    return this.ambulances.map(ambulance => ({
+      id: ambulance.id,
+      longitude: ambulance.longitude,
+      latitude: ambulance.latitude,
+      type: 'ambulance',
+      name: `Ambulance ${ambulance.callSign}`,
+      status: ambulance.status,
+      distance: ambulance.distance * 1000, // convert to meters for consistency
+      eta: ambulance.eta
+    }));
   }
-  
-  // Notify all listeners of ambulance updates
-  private notifyListeners() {
-    this.listeners.forEach(callback => {
-      callback([...this.ambulances]);
-    });
+
+  getActiveAmbulance(): AmbulanceVehicle | null {
+    // Return the first en-route or dispatched ambulance
+    return this.ambulances.find(a => a.status === 'enroute' || a.status === 'dispatched') || null;
+  }
+
+  getNearestAmbulance(): AmbulanceVehicle | null {
+    // Get available ambulances
+    const availableAmbulances = this.ambulances.filter(a => a.status === 'waiting');
+    
+    if (availableAmbulances.length === 0) {
+      return null;
+    }
+    
+    // Sort by distance and return the nearest
+    return [...availableAmbulances].sort((a, b) => a.distance - b.distance)[0];
   }
 }
 
 // Singleton instance
 export const ambulanceService = new AmbulanceTrackingService();
+
+// Hook for tracking ambulances in real-time
+export function useAmbulanceTracking(trackingEnabled = true) {
+  const [ambulances, setAmbulances] = useState<AmbulanceVehicle[]>([]);
+  const [isTracking, setIsTracking] = useState(trackingEnabled);
+  const [userLocation, setUserLocation] = useState<{ longitude: number, latitude: number }>({
+    longitude: -74.0060, 
+    latitude: 40.7128
+  });
+  
+  // Set user location
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const newLocation = {
+            longitude: position.coords.longitude,
+            latitude: position.coords.latitude
+          };
+          setUserLocation(newLocation);
+          ambulanceService.setUserLocation(newLocation);
+        },
+        () => {
+          toast.error("Could not get your precise location. Using default.");
+        }
+      );
+    }
+  }, []);
+  
+  // Start tracking when component mounts
+  useEffect(() => {
+    if (isTracking) {
+      // Start the ambulance service simulation
+      ambulanceService.startTracking();
+      
+      // Subscribe to updates
+      const unsubscribe = ambulanceService.subscribe((updatedAmbulances) => {
+        setAmbulances(updatedAmbulances);
+      });
+      
+      return () => {
+        unsubscribe();
+        // Only stop tracking when unmounting if we started it
+        ambulanceService.stopTracking();
+      };
+    }
+  }, [isTracking]);
+  
+  // Convert ambulances to map locations
+  const ambulanceLocations: MapLocation[] = ambulanceService.getAmbulanceLocations();
+  
+  const toggleTracking = () => {
+    setIsTracking(prev => !prev);
+    if (!isTracking) {
+      ambulanceService.startTracking();
+    } else {
+      ambulanceService.stopTracking();
+    }
+  };
+  
+  const dispatchAmbulanceToLocation = (reportId: string, destination: { 
+    latitude: number, 
+    longitude: number, 
+    address?: string 
+  }) => {
+    return ambulanceService.dispatchAmbulance(reportId, destination);
+  };
+  
+  // Get the currently active ambulance (for route display)
+  const getActiveAmbulance = () => {
+    return ambulanceService.getActiveAmbulance();
+  };
+  
+  return {
+    ambulances,
+    ambulanceLocations,
+    isTracking,
+    toggleTracking,
+    dispatchAmbulanceToLocation,
+    userLocation,
+    getActiveAmbulance
+  };
+}
+
+// Helper functions for calculations
+export { mapService };

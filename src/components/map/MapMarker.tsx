@@ -9,6 +9,8 @@ export interface Location {
   type: 'accident' | 'ambulance' | 'hospital' | 'user' | 'police' | 'fire';
   status?: 'enroute' | 'arrived' | 'waiting' | 'dispatched' | 'completed';
   name?: string;
+  eta?: number;
+  distance?: number;
 }
 
 interface MapMarkerProps {
@@ -30,7 +32,6 @@ const MapMarker: React.FC<MapMarkerProps> = ({
     
     // Define SVG icons and colors based on type
     let fillColor = '#3B82F6'; // Default blue
-    let icon = null;
     
     switch (locationType) {
       case 'accident':
@@ -86,6 +87,16 @@ const MapMarker: React.FC<MapMarkerProps> = ({
             <strong>{location.name || location.type}</strong>
             {location.status && (
               <div className="text-xs mt-1">Status: {location.status}</div>
+            )}
+            {location.eta !== undefined && (
+              <div className="text-xs mt-1">ETA: {location.eta} min</div>
+            )}
+            {location.distance !== undefined && (
+              <div className="text-xs mt-1">Distance: {
+                location.distance < 1000 
+                  ? `${Math.round(location.distance)}m` 
+                  : `${(location.distance / 1000).toFixed(1)}km`
+              }</div>
             )}
           </div>
         </InfoWindow>

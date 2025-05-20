@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,7 +24,15 @@ import NotFound from "./pages/NotFound";
 import MainLayout from "./layouts/MainLayout";
 
 // Create a new QueryClient instance outside of the component
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 10 * 1000, // 10 seconds
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const AppRoutes = () => {
   return (
@@ -77,7 +86,7 @@ const App = () => {
               <EmergencyProvider>
                 <ChatbotProvider>
                   <Toaster />
-                  <Sonner />
+                  <Sonner position="top-center" />
                   <AppRoutes />
                 </ChatbotProvider>
               </EmergencyProvider>
