@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, AlertTriangle, Phone, User, Ambulance, Map, History } from 'lucide-react';
@@ -7,7 +6,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { useEmergency } from '@/contexts/EmergencyContext';
 import { toast } from 'sonner';
 import AmbulanceMap from '@/components/AmbulanceMap';
-import { useAmbulanceTracking } from '@/services/AmbulanceTrackingService';
+import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 
 const ReportDetails = () => {
   const { id } = useParams<{ id: string }>();

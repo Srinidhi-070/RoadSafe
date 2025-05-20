@@ -5,7 +5,7 @@ import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, PanelLe
 import AnimatedContainer from '@/components/AnimatedContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import StatusBadge from '@/components/StatusBadge';
-import { useAmbulanceTracking } from '@/services/AmbulanceTrackingService';
+import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 import { toast } from 'sonner';
 import AmbulanceMap from '@/components/AmbulanceMap';
 
