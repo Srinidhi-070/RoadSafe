@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, PanelLeft } from 'lucide-react';
@@ -8,6 +7,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 import { toast } from 'sonner';
 import AmbulanceMap from '@/components/AmbulanceMap';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface LocationItem {
   id: string;
@@ -64,6 +64,7 @@ const MapScreen = () => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState<string[]>(['hospital', 'ambulance']);
   const [isPanelOpen, setIsPanelOpen] = useState(true);
+  const isMobile = useIsMobile();
   
   const [locations, setLocations] = useState<LocationItem[]>([]);
   
@@ -76,8 +77,13 @@ const MapScreen = () => {
     getActiveAmbulance
   } = useAmbulanceTracking();
   
-  // Get the active ambulance
-  const activeAmbulance = getActiveAmbulance();
+  // Mobile-first approach: Default panel state
+  useEffect(() => {
+    // On mobile, default to closed panel
+    if (isMobile) {
+      setIsPanelOpen(false);
+    }
+  }, [isMobile]);
   
   // Simulate loading locations
   useEffect(() => {
@@ -155,7 +161,7 @@ const MapScreen = () => {
         () => {
           toast.error('Could not get your location');
         },
-        { timeout: 3000, enableHighAccuracy: false }
+        { timeout: 3000, enableHighAccuracy: true } // Use high accuracy for mobile
       );
     } else {
       toast.error('Geolocation is not supported by your browser');
@@ -177,7 +183,7 @@ const MapScreen = () => {
   
   return (
     <div className="min-h-screen pt-6 pb-20 relative">
-      {/* Map View - Now Full Screen */}
+      {/* Map View - Full Screen */}
       <div className="absolute inset-0 pt-16 pb-20">
         <AmbulanceMap 
           className="h-full" 
@@ -187,23 +193,23 @@ const MapScreen = () => {
         />
       </div>
       
-      {/* Header */}
-      <div className="absolute top-0 left-0 right-0 pt-6 px-4 z-10 bg-gradient-to-b from-background via-background/95 to-transparent pb-8">
+      {/* Header - Mobile optimized */}
+      <div className="absolute top-0 left-0 right-0 pt-3 px-3 z-10 bg-gradient-to-b from-background via-background/95 to-transparent pb-6">
         <AnimatedContainer className="mb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button 
                 onClick={() => navigate('/home')}
-                className="mr-4 p-2 rounded-full bg-background/80 hover:bg-muted transition-colors shadow-sm"
+                className="mr-3 p-2 rounded-full bg-background/90 hover:bg-muted transition-colors shadow-sm"
               >
                 <ArrowLeft className="h-5 w-5" />
               </button>
-              <h1 className="text-xl font-semibold">Nearby Services</h1>
+              <h1 className="text-lg font-semibold">Nearby Services</h1>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={toggleTracking}
-                className={`p-2 rounded-full transition-colors shadow-sm bg-background/80 ${
+                className={`p-2 rounded-full transition-colors shadow-sm bg-background/90 ${
                   isTracking ? 'text-success' : 'text-muted-foreground'
                 }`}
                 title={isTracking ? "Live tracking on" : "Live tracking off"}
@@ -212,7 +218,7 @@ const MapScreen = () => {
               </button>
               <button
                 onClick={togglePanel}
-                className={`p-2 rounded-full transition-colors shadow-sm bg-background/80 ${
+                className={`p-2 rounded-full transition-colors shadow-sm bg-background/90 ${
                   isPanelOpen ? 'text-primary' : 'text-muted-foreground'
                 }`}
               >
@@ -222,7 +228,7 @@ const MapScreen = () => {
           </div>
         </AnimatedContainer>
         
-        {/* Search bar */}
+        {/* Search bar - Mobile optimized */}
         <AnimatedContainer animation="fade-in" delay={100} className="mb-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -231,7 +237,7 @@ const MapScreen = () => {
               placeholder="Search hospitals, ambulances..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-10 py-2.5 bg-background/80 backdrop-blur-sm shadow-sm border border-muted/20 rounded-full focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full pl-10 pr-10 py-2 bg-background/90 backdrop-blur-sm shadow-sm border border-muted/20 rounded-full focus:outline-none focus:ring-2 focus:ring-primary text-sm"
             />
             <button
               onClick={handleGetCurrentLocation}
@@ -243,24 +249,24 @@ const MapScreen = () => {
         </AnimatedContainer>
       </div>
       
-      {/* Sliding Side Panel */}
+      {/* Mobile-Optimized Sliding Panel */}
       <div 
-        className={`absolute inset-y-0 py-24 left-0 w-full max-w-xs z-20 transition-transform duration-300 ${
+        className={`absolute inset-y-0 py-20 left-0 w-full max-w-[85%] z-20 transition-transform duration-300 ${
           isPanelOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="h-full overflow-y-auto bg-background/95 backdrop-blur-sm border-r shadow-lg p-4">
+        <div className="h-full overflow-y-auto bg-background/95 backdrop-blur-sm border-r shadow-lg p-3">
           {/* Panel Header */}
-          <div className="mb-4">
-            <h2 className="font-medium text-lg">Emergency Services</h2>
+          <div className="mb-3">
+            <h2 className="font-medium text-base">Emergency Services</h2>
             
-            {/* Filters */}
-            <div className="mt-3">
-              <h3 className="text-sm font-medium mb-2">Filter By Service Type</h3>
-              <div className="flex flex-wrap gap-2">
+            {/* Filters - Mobile optimized */}
+            <div className="mt-2">
+              <h3 className="text-xs font-medium mb-2">Filter By Service Type</h3>
+              <div className="flex flex-wrap gap-1.5">
                 <button
                   onClick={() => toggleFilter('hospital')}
-                  className={`flex items-center px-3 py-1.5 rounded-full text-xs ${
+                  className={`flex items-center px-2.5 py-1 rounded-full text-xs ${
                     selectedFilters.includes('hospital') 
                       ? 'bg-primary text-primary-foreground' 
                       : 'bg-muted text-muted-foreground'
@@ -271,7 +277,7 @@ const MapScreen = () => {
                 </button>
                 <button
                   onClick={() => toggleFilter('ambulance')}
-                  className={`flex items-center px-3 py-1.5 rounded-full text-xs ${
+                  className={`flex items-center px-2.5 py-1 rounded-full text-xs ${
                     selectedFilters.includes('ambulance') 
                       ? 'bg-info text-info-foreground' 
                       : 'bg-muted text-muted-foreground'
@@ -282,7 +288,7 @@ const MapScreen = () => {
                 </button>
                 <button
                   onClick={() => toggleFilter('police')}
-                  className={`flex items-center px-3 py-1.5 rounded-full text-xs ${
+                  className={`flex items-center px-2.5 py-1 rounded-full text-xs ${
                     selectedFilters.includes('police') 
                       ? 'bg-primary text-primary-foreground' 
                       : 'bg-muted text-muted-foreground'
@@ -293,7 +299,7 @@ const MapScreen = () => {
                 </button>
                 <button
                   onClick={() => toggleFilter('fire')}
-                  className={`flex items-center px-3 py-1.5 rounded-full text-xs ${
+                  className={`flex items-center px-2.5 py-1 rounded-full text-xs ${
                     selectedFilters.includes('fire') 
                       ? 'bg-destructive text-destructive-foreground' 
                       : 'bg-muted text-muted-foreground'
@@ -306,14 +312,14 @@ const MapScreen = () => {
             </div>
           </div>
           
-          {/* Locations list */}
-          <div className="space-y-4">
+          {/* Locations list - Mobile optimized */}
+          <div className="space-y-3">
             {/* Active Ambulances section */}
             {isTracking && ambulanceLocations.length > 0 && (
-              <div className="mb-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-sm font-medium text-info">Active Ambulances</h3>
-                  <span className="text-xs bg-info/10 text-info px-2 py-1 rounded-full flex items-center">
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1.5">
+                  <h3 className="text-xs font-medium text-info">Active Ambulances</h3>
+                  <span className="text-xs bg-info/10 text-info px-2 py-0.5 rounded-full flex items-center">
                     <Ambulance className="h-3 w-3 mr-1" />
                     {ambulanceLocations.length} Units
                   </span>
@@ -356,9 +362,9 @@ const MapScreen = () => {
               </div>
             )}
             
-            {/* Fixed Locations */}
+            {/* Fixed Locations - Mobile optimized */}
             <div>
-              <h3 className="text-sm font-medium mb-2">Medical Facilities</h3>
+              <h3 className="text-xs font-medium mb-1.5">Medical Facilities</h3>
               
               {isLoading ? (
                 // Loading skeleton
@@ -438,6 +444,14 @@ const MapScreen = () => {
               )}
             </div>
           </div>
+        </div>
+        
+        {/* Add a handle or indicator for the panel */}
+        <div 
+          className="absolute top-1/2 right-0 transform -translate-y-1/2 translate-x-1/2 rounded-full p-1.5 bg-primary shadow-lg"
+          onClick={togglePanel}
+        >
+          <PanelLeft className="h-3.5 w-3.5 text-white" style={{ transform: isPanelOpen ? 'rotate(180deg)' : 'rotate(0deg)' }} />
         </div>
       </div>
       

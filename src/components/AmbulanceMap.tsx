@@ -39,7 +39,7 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
     setIsLoadingMap(false);
   }, []);
   
-  // Get current location
+  // Get current location with high accuracy for mobile
   const handleGetCurrentLocation = () => {
     toast.info('Getting your current location...');
     
@@ -51,14 +51,14 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
         () => {
           toast.error('Could not get your location');
         },
-        { timeout: 3000, enableHighAccuracy: false }
+        { timeout: 5000, enableHighAccuracy: true, maximumAge: 0 }
       );
     } else {
       toast.error('Geolocation is not supported by your browser');
     }
   };
   
-  // Update map locations when reportLocation, ambulances, or user location changes
+  // Update map locations
   useEffect(() => {
     const newLocations: MapLocation[] = [];
     
@@ -106,12 +106,11 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
     return userLocation;
   };
   
-  // Determine if route should be displayed
+  // Mobile-optimized map display settings
   const shouldShowRoute = isTracking && activeAmbulance && (
     activeAmbulance.status === 'enroute' || activeAmbulance.status === 'dispatched'
   );
   
-  // Get route start and end points
   const getRoutePoints = () => {
     if (!activeAmbulance) return { start: null, end: null };
     
@@ -130,9 +129,9 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
   const { start, end } = getRoutePoints();
   
   return (
-    <div className={cn("relative w-full h-64", className)}>
+    <div className={cn("relative w-full h-full", className)}>
       <MapboxMap 
-        className={cn("w-full h-full rounded-lg overflow-hidden border", 
+        className={cn("w-full h-full border-none", 
           isLoadingMap ? 'animate-pulse' : ''
         )}
         locations={mapLocations}
@@ -146,14 +145,14 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
       />
       
       {showControls && (
-        <div className="absolute top-2 right-2 flex space-x-2">
+        <div className="absolute top-[70px] right-2 flex flex-col space-y-2">
           <button
             onClick={toggleTracking}
             className={cn(
               "p-2 rounded-full shadow-md transition-colors bg-background/90",
               isTracking ? "text-success" : "text-muted-foreground"
             )}
-            title={isTracking ? "Turn off live tracking" : "Turn on live tracking"}
+            aria-label={isTracking ? "Turn off live tracking" : "Turn on live tracking"}
           >
             {isTracking ? (
               <Eye className="h-4 w-4" />
@@ -165,7 +164,7 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
           <button
             onClick={handleGetCurrentLocation}
             className="p-2 rounded-full bg-background/90 shadow-md text-primary hover:text-primary/80 transition-colors"
-            title="Get current location"
+            aria-label="Get current location"
           >
             <Locate className="h-4 w-4" />
           </button>
