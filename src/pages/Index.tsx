@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell } from 'lucide-react';
+import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell, FileText } from 'lucide-react';
 import ActionCard from '@/components/ActionCard';
 import EmergencyButton from '@/components/EmergencyButton';
 import AnimatedContainer from '@/components/AnimatedContainer';
@@ -89,11 +90,11 @@ const Index = () => {
       className: 'h-40'
     },
     {
-      title: 'Alert Authorities',
-      description: 'Contact police, ambulance or fire',
-      icon: <Shield className="h-5 w-5" />,
-      onClick: () => navigate('/services'),
-      color: 'white',
+      title: 'Report Accident',
+      description: 'Document and submit details',
+      icon: <FileText className="h-5 w-5" />,
+      onClick: () => navigate('/report'),
+      color: 'orange',
       className: 'h-40'
     }
   ];
@@ -154,15 +155,17 @@ const Index = () => {
                   index === 0 ? 'bg-indigo-500/80' : 
                   index === 1 ? 'bg-teal-500/80' : 
                   index === 2 ? 'bg-orange-400/80' : 
+                  index === 3 ? 'bg-amber-500/80' :
                   'bg-white/10 backdrop-blur-sm'
                 ) : (
                   index === 0 ? 'bg-indigo-400' : 
                   index === 1 ? 'bg-teal-400' : 
                   index === 2 ? 'bg-orange-300' : 
+                  index === 3 ? 'bg-amber-400' :
                   'bg-white/80 backdrop-blur-sm'
                 )
               }`}
-              variant={index === 3 ? 'outline' : 'default'}
+              variant={index === 3 ? 'default' : 'default'}
             />
           </AnimatedContainer>
         ))}
