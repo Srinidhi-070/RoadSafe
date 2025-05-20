@@ -6,7 +6,7 @@ import AnimatedContainer from '@/components/AnimatedContainer';
 import MapboxMap, { MapLocation } from '@/components/MapboxMap';
 import BottomNavigation from '@/components/BottomNavigation';
 import StatusBadge from '@/components/StatusBadge';
-import { useMapboxAmbulanceTracking } from '@/hooks/useMapboxAmbulanceTracking';
+import { useMapboxAmbulanceTracking, mapboxAmbulanceService } from '@/hooks/useMapboxAmbulanceTracking';
 import { toast } from 'sonner';
 
 interface Location {
@@ -337,7 +337,7 @@ const MapScreen = () => {
                     <div className="ml-3 flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <h3 className="font-medium truncate">{amb.name}</h3>
-                        <StatusBadge status={amb.status || 'waiting'} />
+                        <StatusBadge status={(amb.status || 'waiting') as any} />
                       </div>
                       <div className="mt-1 flex justify-between items-center">
                         <span className="text-xs">
