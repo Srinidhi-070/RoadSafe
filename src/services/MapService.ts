@@ -1,8 +1,9 @@
 
 import mapboxgl from 'mapbox-gl';
 
-// Mapbox access token - in production this would be an environment variable
+// Mapbox access token and Google Maps API key
 export const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoibG92YWJsZS1haS1kZW1vIiwiYSI6ImNsdmkzbGl2bzFlbm4ya3J0Mmx5YWI2aTQifQ.GsUyyKxmVhyyu5F3jKrSwA';
+export const GOOGLE_MAPS_API_KEY = 'AIzaSyA1DUCXVkJUuzQcucV8J2Le3EHStEDNZmQ';
 
 // Initialize Mapbox
 mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;

@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { cn } from '@/lib/utils';
@@ -12,9 +11,8 @@ import type { Location } from './map/MapMarker';
 // Re-export Location type to maintain compatibility
 export type { Location } from './map/MapMarker';
 
-// Create a default Google Maps API key for testing/development
-// In production, users should provide their own key
-const DEFAULT_API_KEY = 'AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg';
+// Use the provided API key
+const DEFAULT_API_KEY = 'AIzaSyA1DUCXVkJUuzQcucV8J2Le3EHStEDNZmQ';
 
 interface MapViewProps {
   className?: string;
@@ -62,10 +60,10 @@ const MapView: React.FC<MapViewProps> = ({
     };
   }, [lazy, shouldInitialize]);
 
-  // Load Google Maps API - with consistent API key
+  // Load Google Maps API - with the provided API key
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: userApiKey,
+    googleMapsApiKey: apiKey,
   });
 
   // Handle API key change
