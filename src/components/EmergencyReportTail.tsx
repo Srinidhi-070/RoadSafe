@@ -62,7 +62,11 @@ const EmergencyReportTail: React.FC<EmergencyReportProps> = ({
     >
       <div className="flex items-start">
         {/* Icon */}
-        <div className="w-10 h-10 rounded-full flex items-center justify-center bg-destructive/10 text-destructive mr-3 flex-shrink-0">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-destructive/10 text-destructive mr-3 flex-shrink-0 ${
+          status === 'severe' ? 'bg-emergency/10 text-emergency' : 
+          status === 'moderate' ? 'bg-warning/10 text-warning' : 
+          'bg-info/10 text-info'
+        }`}>
           <Icon className="h-5 w-5" />
         </div>
         
