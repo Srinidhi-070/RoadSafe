@@ -4,12 +4,13 @@ import { LucideIcon, AlertTriangle, MapPin, Phone, Clock, ArrowRight } from 'luc
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import StatusBadge from './StatusBadge';
+import type { StatusType } from './StatusBadge';
 
 interface EmergencyReportProps {
   id: string;
   title: string;
   description?: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'critical' | 'minor' | 'moderate' | 'severe';
+  status: StatusType;
   location: {
     address?: string;
     lat: number;

@@ -2,7 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
-type StatusType = 'minor' | 'moderate' | 'severe' | 'processing' | 'completed' | 'pending' | 'responded' | 'enroute' | 'arrived' | 'waiting' | 'dispatched';
+export type StatusType = 'minor' | 'moderate' | 'severe' | 'processing' | 'completed' | 'pending' | 'responded' | 'enroute' | 'arrived' | 'waiting' | 'dispatched' | 'confirmed' | 'cancelled' | 'critical';
 
 interface StatusBadgeProps {
   status: StatusType;
@@ -18,6 +18,8 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
         return 'bg-warning/20 text-warning border-warning/30';
       case 'severe':
         return 'bg-emergency/20 text-emergency border-emergency/30';
+      case 'critical':
+        return 'bg-destructive/20 text-destructive border-destructive/30';
       case 'processing':
         return 'bg-info/20 text-info border-info/30';
       case 'completed':
@@ -26,6 +28,10 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
         return 'bg-muted text-muted-foreground border-muted/30';
       case 'responded':
         return 'bg-primary/20 text-primary border-primary/30';
+      case 'confirmed':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'cancelled':
+        return 'bg-destructive/20 text-destructive border-destructive/30';
       case 'enroute':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'arrived':

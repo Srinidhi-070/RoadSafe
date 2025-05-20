@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { MapPin, Eye, EyeOff, Locate } from 'lucide-react';
 import MapboxMap, { MapLocation } from '@/components/MapboxMap';
-import { useAmbulanceTracking } from '@/services/AmbulanceTrackingService';
+import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
