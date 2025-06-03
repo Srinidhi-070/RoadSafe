@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, PanelLeft } from 'lucide-react';
+import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, PanelLeft, Eye, EyeOff } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import BottomNavigation from '@/components/BottomNavigation';
 import StatusBadge from '@/components/StatusBadge';
