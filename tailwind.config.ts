@@ -13,7 +13,7 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			padding: '2rem',
+			padding: '1rem',
 			screens: {
 				'2xl': '1400px'
 			}
@@ -22,6 +22,12 @@ export default {
 			fontFamily: {
 				sans: ['Inter', 'sans-serif'],
 				poppins: ['Poppins', 'sans-serif'],
+			},
+			spacing: {
+				'safe-top': 'env(safe-area-inset-top)',
+				'safe-bottom': 'env(safe-area-inset-bottom)',
+				'safe-left': 'env(safe-area-inset-left)',
+				'safe-right': 'env(safe-area-inset-right)',
 			},
 			colors: {
 				border: 'hsl(var(--border))',
@@ -189,5 +195,28 @@ export default {
 			}
 		}
 	},
-	plugins: [require("tailwindcss-animate")],
+	plugins: [
+		require("tailwindcss-animate"),
+		function({ addUtilities }: any) {
+			const newUtilities = {
+				'.scrollbar-hide': {
+					'-ms-overflow-style': 'none',
+					'scrollbar-width': 'none',
+					'&::-webkit-scrollbar': {
+						display: 'none'
+					}
+				},
+				'.safe-area-top': {
+					'padding-top': 'env(safe-area-inset-top)'
+				},
+				'.safe-area-bottom': {
+					'padding-bottom': 'env(safe-area-inset-bottom)'
+				},
+				'.touch-manipulation': {
+					'touch-action': 'manipulation'
+				}
+			}
+			addUtilities(newUtilities)
+		}
+	],
 } satisfies Config;

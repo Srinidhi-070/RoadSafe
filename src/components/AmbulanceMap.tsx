@@ -19,9 +19,9 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
   className,
   reportLocation,
   showTracking = true,
-  showControls = true,
+  showControls = false, // Default to false for mobile
   interactive = true,
-  zoom = 14,
+  zoom = 15, // Higher zoom for mobile
 }) => {
   const { 
     ambulanceLocations, 
@@ -113,7 +113,7 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
     if (userLocation) {
       return { lat: userLocation.latitude, lng: userLocation.longitude };
     }
-    return { lat: 40.7128, lng: -74.0060 }; // Default NYC
+    return { lat: 12.9716, lng: 77.5946 }; // Default to Bangalore
   }, [reportLocation, getActiveAmbulance, userLocation]);
   
   return (
@@ -127,37 +127,37 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
       />
       
       {showControls && (
-        <div className="absolute top-4 right-4 flex flex-col space-y-3 z-10">
+        <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
           <button
             onClick={toggleTracking}
             className={cn(
-              "p-3 rounded-full shadow-xl backdrop-blur-sm transition-all duration-200 transform hover:scale-110",
+              "p-2.5 rounded-full shadow-xl backdrop-blur-sm transition-all duration-200 active:scale-95",
               isTracking 
                 ? "bg-green-500/90 text-white" 
-                : "bg-white/90 text-gray-600 hover:bg-white"
+                : "bg-white/90 text-gray-600"
             )}
             aria-label={isTracking ? "Turn off live tracking" : "Turn on live tracking"}
           >
             {isTracking ? (
-              <Eye className="h-5 w-5" />
+              <Eye className="h-4 w-4" />
             ) : (
-              <EyeOff className="h-5 w-5" />
+              <EyeOff className="h-4 w-4" />
             )}
           </button>
           
           <button
             onClick={handleGetCurrentLocation}
-            className="p-3 rounded-full bg-white/90 backdrop-blur-sm shadow-xl text-gray-600 hover:bg-white hover:shadow-2xl transition-all duration-200 transform hover:scale-110"
+            className="p-2.5 rounded-full bg-white/90 backdrop-blur-sm shadow-xl text-gray-600 active:scale-95 transition-all duration-200"
             aria-label="Get current location"
           >
-            <Locate className="h-5 w-5" />
+            <Locate className="h-4 w-4" />
           </button>
         </div>
       )}
       
       {reportLocation?.address && (
-        <div className="absolute bottom-4 right-4 max-w-[70%] bg-white/90 backdrop-blur-sm text-sm px-3 py-2 rounded-full shadow-lg flex items-center z-10">
-          <MapPin className="h-4 w-4 mr-2 text-gray-600 flex-shrink-0" />
+        <div className="absolute bottom-4 right-4 max-w-[80%] bg-white/90 backdrop-blur-sm text-xs px-3 py-2 rounded-full shadow-lg flex items-center z-10">
+          <MapPin className="h-3 w-3 mr-2 text-gray-600 flex-shrink-0" />
           <span className="text-gray-800 truncate font-medium">{reportLocation.address}</span>
         </div>
       )}

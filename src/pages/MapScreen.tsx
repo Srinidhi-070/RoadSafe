@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, PanelLeft, Eye, EyeOff } from 'lucide-react';
@@ -7,7 +8,6 @@ import StatusBadge from '@/components/StatusBadge';
 import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 import { toast } from 'sonner';
 import AmbulanceMap from '@/components/AmbulanceMap';
-import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -43,7 +43,6 @@ const MapScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState<string[]>(['hospital', 'ambulance']);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const isMobile = useIsMobile();
   
   const [locations, setLocations] = useState<LocationItem[]>([]);
   
@@ -179,62 +178,60 @@ const MapScreen = () => {
   const getActiveAmbulanceData = getActiveAmbulance();
   
   return (
-    <div className="min-h-screen relative bg-gray-900">
+    <div className="min-h-screen relative bg-gray-900 overflow-hidden">
       {/* Full Screen Map */}
       <AmbulanceMap 
         className="absolute inset-0" 
         showControls={false}
         interactive={true}
-        zoom={12}
+        zoom={13}
       />
       
       {/* Dark overlay for better contrast */}
       <div className="absolute inset-0 bg-black/10 pointer-events-none" />
       
-      {/* Top Section with Search and Filters */}
-      <div className="absolute top-0 left-0 right-0 z-20 pt-4 px-4">
-        <AnimatedContainer className="space-y-4">
-          {/* Header with Back Button */}
+      {/* Mobile-Optimized Top Section */}
+      <div className="absolute top-0 left-0 right-0 z-20 pt-2 px-3 safe-area-top">
+        <AnimatedContainer className="space-y-3">
+          {/* Compact Header */}
           <div className="flex items-center justify-between">
             <button 
               onClick={() => navigate('/home')}
-              className="p-3 rounded-full bg-white/95 backdrop-blur-sm shadow-lg hover:bg-white transition-all duration-200"
+              className="p-2.5 rounded-full bg-white/95 backdrop-blur-sm shadow-lg active:scale-95 transition-all duration-200"
             >
               <ArrowLeft className="h-5 w-5 text-gray-800" />
             </button>
-            <h1 className="text-lg font-bold text-white drop-shadow-lg">Emergency Services - Bangalore</h1>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={toggleTracking}
-                className={`p-3 rounded-full backdrop-blur-sm shadow-lg transition-all duration-200 ${
-                  isTracking ? 'bg-green-500/90 text-white' : 'bg-white/90 text-gray-600'
-                }`}
-              >
-                {isTracking ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
-          
-          {/* Enhanced Search Bar */}
-          <div className="relative max-w-md mx-auto">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
-            <input
-              type="text"
-              placeholder="Search hospitals, ambulances in Bangalore..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-12 py-4 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border-0 focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 placeholder-gray-500"
-            />
+            <h1 className="text-base font-bold text-white drop-shadow-lg truncate px-2">Emergency Services</h1>
             <button
-              onClick={handleGetCurrentLocation}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 transition-colors"
+              onClick={toggleTracking}
+              className={`p-2.5 rounded-full backdrop-blur-sm shadow-lg active:scale-95 transition-all duration-200 ${
+                isTracking ? 'bg-green-500/90 text-white' : 'bg-white/90 text-gray-600'
+              }`}
             >
-              <Locate className="h-5 w-5" />
+              {isTracking ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
             </button>
           </div>
           
-          {/* Horizontal Scrollable Filter Chips */}
-          <div className="flex space-x-3 overflow-x-auto pb-2 scrollbar-hide">
+          {/* Mobile Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <input
+              type="text"
+              placeholder="Search in Bangalore..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-10 py-3 bg-white/95 backdrop-blur-sm rounded-2xl shadow-lg border-0 focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 placeholder-gray-500 text-sm"
+            />
+            <button
+              onClick={handleGetCurrentLocation}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-primary hover:text-primary/80 transition-colors active:scale-95"
+            >
+              <Locate className="h-4 w-4" />
+            </button>
+          </div>
+          
+          {/* Mobile Filter Chips */}
+          <div className="flex space-x-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
             {filterData.map((filter) => {
               const isActive = selectedFilters.includes(filter.id);
               const IconComponent = filter.icon;
@@ -243,14 +240,14 @@ const MapScreen = () => {
                 <button
                   key={filter.id}
                   onClick={() => toggleFilter(filter.id)}
-                  className={`flex items-center px-4 py-2 rounded-full whitespace-nowrap transition-all duration-200 transform hover:scale-105 shadow-lg ${
+                  className={`flex items-center px-3 py-2 rounded-full whitespace-nowrap transition-all duration-200 active:scale-95 shadow-md text-xs font-medium min-w-max ${
                     isActive 
                       ? `${filter.activeColor} shadow-lg` 
-                      : 'bg-white/90 text-gray-700 hover:bg-white'
+                      : 'bg-white/90 text-gray-700'
                   }`}
                 >
-                  <IconComponent className="h-4 w-4 mr-2" />
-                  <span className="text-sm font-medium">{filter.label}</span>
+                  <IconComponent className="h-3.5 w-3.5 mr-1.5" />
+                  <span>{filter.label}</span>
                 </button>
               );
             })}
@@ -258,44 +255,37 @@ const MapScreen = () => {
         </AnimatedContainer>
       </div>
       
-      {/* Floating Action Buttons */}
-      <div className="absolute top-1/2 right-4 transform -translate-y-1/2 flex flex-col space-y-3 z-20">
-        <button
-          onClick={handleGetCurrentLocation}
-          className="p-4 rounded-full bg-white/95 backdrop-blur-sm shadow-xl text-gray-700 hover:bg-white hover:shadow-2xl transition-all duration-200 transform hover:scale-110"
-        >
-          <Locate className="h-6 w-6" />
-        </button>
-        
+      {/* Mobile Floating Action Button */}
+      <div className="absolute bottom-28 right-4 z-20">
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
-            <button className="p-4 rounded-full bg-white/95 backdrop-blur-sm shadow-xl text-gray-700 hover:bg-white hover:shadow-2xl transition-all duration-200 transform hover:scale-110">
+            <button className="p-4 rounded-full bg-primary shadow-2xl text-white active:scale-95 transition-all duration-200 transform hover:shadow-3xl">
               <PanelLeft className="h-6 w-6" />
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[70vh] bg-white/95 backdrop-blur-sm">
-            <SheetHeader>
-              <SheetTitle>Bangalore Emergency Services</SheetTitle>
+          <SheetContent side="bottom" className="h-[85vh] bg-white/95 backdrop-blur-sm rounded-t-3xl border-t-0">
+            <SheetHeader className="pb-4">
+              <SheetTitle className="text-lg">Emergency Services - Bangalore</SheetTitle>
             </SheetHeader>
-            <div className="space-y-4 mt-6 overflow-y-auto">
-              {/* Active Ambulances */}
+            <div className="space-y-4 overflow-y-auto h-full pb-6">
+              {/* Active Ambulances - Mobile Optimized */}
               {isTracking && ambulanceLocations.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                    <Ambulance className="h-5 w-5 mr-2 text-blue-600" />
-                    Active Ambulances
+                  <h3 className="text-base font-semibold text-gray-800 flex items-center sticky top-0 bg-white/90 backdrop-blur-sm py-2 -mx-4 px-4 z-10">
+                    <Ambulance className="h-4 w-4 mr-2 text-blue-600" />
+                    Live Ambulances
                   </h3>
                   {ambulanceLocations.map((amb, index) => (
-                    <Card key={amb.id} className="overflow-hidden hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                      <CardContent className="p-4">
+                    <Card key={amb.id} className="overflow-hidden shadow-sm border-0 bg-white/90 backdrop-blur-sm">
+                      <CardContent className="p-3">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                              <Ambulance className="h-6 w-6 text-blue-600" />
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                              <Ambulance className="h-5 w-5 text-blue-600" />
                             </div>
-                            <div>
-                              <h4 className="font-bold text-gray-800">{amb.name}</h4>
-                              <p className="text-sm text-gray-600">
+                            <div className="min-w-0 flex-1">
+                              <h4 className="font-semibold text-gray-800 text-sm truncate">{amb.name}</h4>
+                              <p className="text-xs text-gray-600 truncate">
                                 {amb.status === 'enroute' ? 'En route to patient' : 
                                  amb.status === 'dispatched' ? 'Dispatched' : 
                                  amb.status === 'arrived' ? 'Arrived at scene' : 
@@ -303,10 +293,10 @@ const MapScreen = () => {
                               </p>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="text-right flex-shrink-0">
                             <StatusBadge status={amb.status as any} />
                             {amb.eta && amb.eta > 0 && (
-                              <p className="text-lg font-bold text-gray-800 mt-1">
+                              <p className="text-sm font-bold text-gray-800 mt-1">
                                 {amb.eta} min
                               </p>
                             )}
@@ -318,42 +308,42 @@ const MapScreen = () => {
                 </div>
               )}
               
-              {/* Medical Facilities */}
+              {/* Emergency Services - Mobile Optimized */}
               <div className="space-y-3">
-                <h3 className="text-lg font-semibold text-gray-800 flex items-center">
-                  <Hospital className="h-5 w-5 mr-2 text-green-600" />
+                <h3 className="text-base font-semibold text-gray-800 flex items-center sticky top-0 bg-white/90 backdrop-blur-sm py-2 -mx-4 px-4 z-10">
+                  <Hospital className="h-4 w-4 mr-2 text-green-600" />
                   Emergency Services
                 </h3>
                 {locations.filter(location => 
                   selectedFilters.includes(location.type) && 
                   (searchQuery === '' || location.name.toLowerCase().includes(searchQuery.toLowerCase()))
                 ).map((location, index) => (
-                  <Card key={location.id} className="overflow-hidden hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                    <CardContent className="p-4">
+                  <Card key={location.id} className="overflow-hidden shadow-sm border-0 bg-white/90 backdrop-blur-sm">
+                    <CardContent className="p-3">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                        <div className="flex items-center space-x-3 flex-1 min-w-0">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                             location.type === 'hospital' ? 'bg-green-100' : 
                             location.type === 'police' ? 'bg-blue-100' : 'bg-orange-100'
                           }`}>
-                            {location.type === 'hospital' && <Hospital className="h-6 w-6 text-green-600" />}
-                            {location.type === 'police' && <ShieldIcon className="h-6 w-6 text-blue-600" />}
-                            {location.type === 'fire' && <FlameIcon className="h-6 w-6 text-orange-600" />}
+                            {location.type === 'hospital' && <Hospital className="h-5 w-5 text-green-600" />}
+                            {location.type === 'police' && <ShieldIcon className="h-5 w-5 text-blue-600" />}
+                            {location.type === 'fire' && <FlameIcon className="h-5 w-5 text-orange-600" />}
                           </div>
-                          <div className="flex-1">
-                            <h4 className="font-bold text-gray-800">{location.name}</h4>
-                            <p className="text-sm text-gray-600 flex items-center">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              {location.address}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-semibold text-gray-800 text-sm truncate">{location.name}</h4>
+                            <p className="text-xs text-gray-600 flex items-center truncate">
+                              <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{location.address}</span>
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-bold text-gray-800">{location.distance.toFixed(1)} km</p>
-                          <span className={`text-xs px-2 py-1 rounded-full ${
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm font-bold text-gray-800">{location.distance.toFixed(1)} km</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
                             location.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                           }`}>
-                            {location.isOpen ? 'Open 24/7' : 'Closed'}
+                            {location.isOpen ? '24/7' : 'Closed'}
                           </span>
                         </div>
                       </div>
@@ -366,13 +356,23 @@ const MapScreen = () => {
         </Sheet>
       </div>
       
-      {/* Live Tracking Widget */}
+      {/* Mobile Location FAB */}
+      <div className="absolute bottom-28 left-4 z-20">
+        <button
+          onClick={handleGetCurrentLocation}
+          className="p-3 rounded-full bg-white/95 backdrop-blur-sm shadow-xl text-gray-700 active:scale-95 transition-all duration-200"
+        >
+          <Locate className="h-5 w-5" />
+        </button>
+      </div>
+      
+      {/* Mobile Live Tracking Widget */}
       {isTracking && getActiveAmbulanceData && (
-        <div className="absolute bottom-24 left-4 z-20">
+        <div className="absolute bottom-28 left-1/2 transform -translate-x-1/2 z-20">
           <div className="bg-green-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2 animate-pulse">
             <div className="w-2 h-2 bg-white rounded-full animate-bounce"></div>
             <span className="text-sm font-medium">
-              Live Tracking • ETA {getActiveAmbulanceData.eta} min
+              Live • ETA {getActiveAmbulanceData.eta} min
             </span>
           </div>
         </div>
