@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
@@ -28,12 +27,13 @@ interface MapboxMapProps {
   routeStart?: { longitude: number; latitude: number };
   routeEnd?: { longitude: number; latitude: number };
   onMapLoad?: () => void;
+  darkMode?: boolean;
 }
 
 const MapboxMap: React.FC<MapboxMapProps> = ({
   className,
   locations = [],
-  centerLocation = { longitude: -74.0060, latitude: 40.7128 }, // Default to NYC
+  centerLocation = { longitude: -74.0060, latitude: 40.7128 },
   zoom = 12,
   interactive = true,
   lazy = false,
@@ -41,6 +41,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
   routeStart,
   routeEnd,
   onMapLoad,
+  darkMode = false,
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -75,10 +76,10 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
   useEffect(() => {
     if (!shouldInitialize || !mapContainer.current) return;
     
-    // Create the map
+    // Create the map with dark theme
     const mapInstance = new mapboxgl.Map({
       container: mapContainer.current,
-      style: 'mapbox://styles/mapbox/streets-v12',
+      style: darkMode ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/streets-v12',
       center: [centerLocation.longitude, centerLocation.latitude],
       zoom: zoom,
       interactive: interactive,
@@ -86,7 +87,13 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
 
     // Add navigation controls if interactive
     if (interactive) {
-      mapInstance.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'top-right');
+      mapInstance.addControl(
+        new mapboxgl.NavigationControl({ 
+          showCompass: false,
+          showZoom: true 
+        }), 
+        'top-right'
+      );
     }
 
     // Save map instance
@@ -96,7 +103,7 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
     mapInstance.on('load', () => {
       setIsMapLoaded(true);
       
-      // Add route source and layer
+      // Add route source and layer with enhanced styling
       mapInstance.addSource('route', {
         type: 'geojson',
         data: {
@@ -118,9 +125,9 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#3887be',
-          'line-width': 5,
-          'line-opacity': 0.75
+          'line-color': darkMode ? '#60A5FA' : '#3B82F6',
+          'line-width': 6,
+          'line-opacity': 0.8
         }
       });
       
@@ -140,13 +147,12 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
         map.current = null;
       }
     };
-  }, [centerLocation, zoom, interactive, shouldInitialize, onMapLoad]);
+  }, [centerLocation, zoom, interactive, shouldInitialize, onMapLoad, darkMode]);
 
   // Update markers when locations change
   useEffect(() => {
     if (!map.current || !isMapLoaded || !locations.length) return;
 
-    // Track which markers we've updated
     const updatedMarkers: { [key: string]: boolean } = {};
 
     // Add or update markers
@@ -154,71 +160,70 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
       const id = location.id;
       updatedMarkers[id] = true;
 
-      // Create HTML element for marker
+      // Enhanced marker creation with better styling
       const createMarkerElement = (type: string, status?: string) => {
         const el = document.createElement('div');
         
-        // Base styles
-        el.style.width = '36px';
-        el.style.height = '36px';
+        // Enhanced base styles
+        el.style.width = '40px';
+        el.style.height = '40px';
         el.style.borderRadius = '50%';
         el.style.display = 'flex';
         el.style.alignItems = 'center';
         el.style.justifyContent = 'center';
+        el.style.border = '3px solid white';
+        el.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+        el.style.transition = 'all 0.3s ease';
         
-        // Type-specific styles
+        // Enhanced hover effect
+        el.addEventListener('mouseenter', () => {
+          el.style.transform = 'scale(1.1)';
+          el.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4)';
+        });
+        
+        el.addEventListener('mouseleave', () => {
+          el.style.transform = 'scale(1)';
+          el.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.3)';
+        });
+        
+        // Type-specific enhanced styles
         if (type === 'user') {
-          el.style.backgroundColor = '#1EAEDB';
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="white">
-            <circle cx="12" cy="12" r="10" fill="#1EAEDB" stroke="white" stroke-width="2"/>
-            <circle cx="12" cy="12" r="3" fill="white" stroke="none"/>
-          </svg>`;
+          el.style.backgroundColor = '#3B82F6';
+          el.innerHTML = `<div style="width: 12px; height: 12px; background: white; border-radius: 50%; box-shadow: 0 0 0 3px #3B82F6;"></div>`;
         } else if (type === 'ambulance') {
           const bgColor = status === 'enroute' ? '#F97316' : '#8B5CF6';
           el.style.backgroundColor = bgColor;
-          el.style.boxShadow = status === 'enroute' ? '0 0 0 6px rgba(249, 115, 22, 0.3)' : 'none';
-          el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 17H5a2 2 0 0 1-2-2V7c0-1.1.9-2 2-2h10a2 2 0 0 1 2 2v3.3"></path>
-            <path d="M11 16.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-.5a2 2 0 0 1 4 0z"></path>
-            <path d="M13 11l2 2 4-4"></path>
-            <path d="M15 5v6"></path>
-          </svg>`;
-          // Add animation for en route ambulances
           if (status === 'enroute') {
-            el.style.animation = 'pulse 1.5s infinite';
+            el.style.animation = 'pulse 2s infinite';
             const style = document.createElement('style');
             style.textContent = `
               @keyframes pulse {
-                0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.6); }
-                70% { box-shadow: 0 0 0 10px rgba(249, 115, 22, 0); }
+                0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.7); }
+                70% { box-shadow: 0 0 0 15px rgba(249, 115, 22, 0); }
                 100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
               }
             `;
             document.head.appendChild(style);
           }
+          el.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M7 17H5a2 2 0 0 1-2-2V7c0-1.1.9-2 2-2h10a2 2 0 0 1 2 2v3.3"></path>
+            <path d="M11 16.5V17a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-.5a2 2 0 0 1 4 0z"></path>
+            <path d="M13 11l2 2 4-4"></path>
+            <path d="M15 5v6"></path>
+          </svg>`;
         } else if (type === 'accident') {
-          el.style.backgroundColor = '#ea384c';
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          el.style.backgroundColor = '#EF4444';
+          el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
             <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
             <line x1="12" y1="9" x2="12" y2="13"></line>
             <line x1="12" y1="17" x2="12.01" y2="17"></line>
           </svg>`;
         } else if (type === 'hospital') {
-          el.style.backgroundColor = '#9b87f5';
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          el.style.backgroundColor = '#10B981';
+          el.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
             <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
             <path d="M8 12h8"></path>
             <path d="M12 8v8"></path>
-          </svg>`;
-        } else if (type === 'police') {
-          el.style.backgroundColor = '#4F46E5';
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>`;
-        } else if (type === 'fire') {
-          el.style.backgroundColor = '#F59E0B';
-          el.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
           </svg>`;
         }
         
@@ -335,16 +340,16 @@ const MapboxMap: React.FC<MapboxMapProps> = ({
 
   return (
     <div 
-      className={cn('w-full h-64 bg-gray-100 rounded-lg relative overflow-hidden', className)} 
+      className={cn('w-full h-64 bg-gray-900 rounded-lg relative overflow-hidden', className)} 
       ref={mapContainerRef}
     >
       {shouldInitialize ? (
         <div ref={mapContainer} className="absolute inset-0" />
       ) : (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted">
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
           <div className="text-center">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-2"></div>
-            <p className="text-sm text-muted-foreground">Map loading...</p>
+            <p className="text-sm text-gray-400">Loading map...</p>
           </div>
         </div>
       )}

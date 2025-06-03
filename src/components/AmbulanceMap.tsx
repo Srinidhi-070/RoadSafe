@@ -106,7 +106,7 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
     return userLocation;
   };
   
-  // Mobile-optimized map display settings
+  // Show route for active ambulances
   const shouldShowRoute = isTracking && activeAmbulance && (
     activeAmbulance.status === 'enroute' || activeAmbulance.status === 'dispatched'
   );
@@ -131,9 +131,7 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
   return (
     <div className={cn("relative w-full h-full", className)}>
       <MapboxMap 
-        className={cn("w-full h-full border-none", 
-          isLoadingMap ? 'animate-pulse' : ''
-        )}
+        className="w-full h-full border-none"
         locations={mapLocations}
         centerLocation={getCenterLocation()}
         zoom={zoom}
@@ -142,53 +140,42 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
         routeStart={start}
         routeEnd={end}
         onMapLoad={handleMapLoad}
+        darkMode={true}
       />
       
       {showControls && (
-        <div className="absolute top-[70px] right-2 flex flex-col space-y-2">
+        <div className="absolute top-4 right-4 flex flex-col space-y-3">
           <button
             onClick={toggleTracking}
             className={cn(
-              "p-2 rounded-full shadow-md transition-colors bg-background/90",
-              isTracking ? "text-success" : "text-muted-foreground"
+              "p-3 rounded-full shadow-xl backdrop-blur-sm transition-all duration-200 transform hover:scale-110",
+              isTracking 
+                ? "bg-green-500/90 text-white" 
+                : "bg-white/90 text-gray-600 hover:bg-white"
             )}
             aria-label={isTracking ? "Turn off live tracking" : "Turn on live tracking"}
           >
             {isTracking ? (
-              <Eye className="h-4 w-4" />
+              <Eye className="h-5 w-5" />
             ) : (
-              <EyeOff className="h-4 w-4" />
+              <EyeOff className="h-5 w-5" />
             )}
           </button>
           
           <button
             onClick={handleGetCurrentLocation}
-            className="p-2 rounded-full bg-background/90 shadow-md text-primary hover:text-primary/80 transition-colors"
+            className="p-3 rounded-full bg-white/90 backdrop-blur-sm shadow-xl text-gray-600 hover:bg-white hover:shadow-2xl transition-all duration-200 transform hover:scale-110"
             aria-label="Get current location"
           >
-            <Locate className="h-4 w-4" />
+            <Locate className="h-5 w-5" />
           </button>
         </div>
       )}
       
-      {isTracking && ambulanceLocations.length > 0 && (
-        <div className="absolute bottom-2 left-2 bg-background/90 text-xs px-2 py-1 rounded shadow-md flex items-center">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
-          <span className="text-foreground">
-            Live Tracking 
-            {activeAmbulance && activeAmbulance.eta > 0 && (
-              <span className="ml-1 font-medium">
-                (ETA: {activeAmbulance.eta} min)
-              </span>
-            )}
-          </span>
-        </div>
-      )}
-      
       {reportLocation?.address && (
-        <div className="absolute bottom-2 right-2 max-w-[70%] bg-background/90 text-xs px-2 py-1 rounded shadow-md flex items-center">
-          <MapPin className="h-3 w-3 mr-1 text-muted-foreground flex-shrink-0" />
-          <span className="text-foreground truncate">{reportLocation.address}</span>
+        <div className="absolute bottom-4 right-4 max-w-[70%] bg-white/90 backdrop-blur-sm text-sm px-3 py-2 rounded-full shadow-lg flex items-center">
+          <MapPin className="h-4 w-4 mr-2 text-gray-600 flex-shrink-0" />
+          <span className="text-gray-800 truncate font-medium">{reportLocation.address}</span>
         </div>
       )}
     </div>
