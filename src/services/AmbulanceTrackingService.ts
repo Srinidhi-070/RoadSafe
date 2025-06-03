@@ -18,46 +18,57 @@ class AmbulanceTrackingService {
   private isTracking: boolean = false;
   private interval: NodeJS.Timeout | null = null;
   private subscribers: ((ambulances: AmbulanceVehicle[]) => void)[] = [];
-  private userLocation: { longitude: number, latitude: number } = { longitude: -74.0060, latitude: 40.7128 };
+  // Bangalore center coordinates
+  private userLocation: { longitude: number, latitude: number } = { longitude: 77.5946, latitude: 12.9716 };
   private targetLocation: { longitude: number, latitude: number } | null = null;
 
   constructor() {
-    // Initialize with some ambulances
-    this.createInitialAmbulances();
+    // Initialize with Bangalore ambulances
+    this.createBangaloreAmbulances();
   }
 
-  private createInitialAmbulances() {
+  private createBangaloreAmbulances() {
     const { longitude, latitude } = this.userLocation;
     this.ambulances = [
       {
-        id: 'amb-1',
-        callSign: 'Alpha-12',
+        id: 'amb-ka-01',
+        callSign: 'KA-01-108',
         longitude: longitude + 0.015,
         latitude: latitude + 0.008,
         status: 'enroute',
-        speed: 45,
-        distance: 1.7,
+        speed: 35, // Adjusted for Bangalore traffic
+        distance: 1.2,
         eta: 4
       },
       {
-        id: 'amb-2',
-        callSign: 'Bravo-45',
+        id: 'amb-ka-02',
+        callSign: 'KA-02-108',
         longitude: longitude - 0.02,
         latitude: latitude - 0.015,
         status: 'waiting',
         speed: 0,
-        distance: 2.5,
-        eta: 8
+        distance: 2.1,
+        eta: 6
       },
       {
-        id: 'amb-3',
-        callSign: 'Delta-78',
+        id: 'amb-ka-03',
+        callSign: 'KA-03-108',
         longitude: longitude + 0.04,
         latitude: latitude - 0.03,
         status: 'dispatched',
-        speed: 20,
-        distance: 4.8,
-        eta: 11
+        speed: 25, // Slower due to traffic
+        distance: 3.8,
+        eta: 9
+      },
+      {
+        id: 'amb-manipal',
+        callSign: 'Manipal-AMB',
+        longitude: 77.7499,
+        latitude: 12.9698,
+        status: 'waiting',
+        speed: 0,
+        distance: 5.2,
+        eta: 12
       }
     ];
   }
@@ -89,7 +100,7 @@ class AmbulanceTrackingService {
         targetLoc.latitude
       );
       
-      // Update ETA based on distance and speed
+      // Update ETA based on distance and speed (accounting for Bangalore traffic)
       const eta = ambulance.speed > 0 ? Math.ceil((distance / ambulance.speed) * 60) : 999;
       
       return {
@@ -145,7 +156,7 @@ class AmbulanceTrackingService {
     this.interval = setInterval(() => {
       this.updateAmbulancePositions();
       this.notifySubscribers();
-    }, 2000);
+    }, 3000); // Slightly slower updates for realism
   }
 
   stopTracking() {
@@ -168,8 +179,8 @@ class AmbulanceTrackingService {
       // Use target location if available, otherwise use user location
       const targetLoc = this.targetLocation || this.userLocation;
       
-      // Moving ambulances should get closer to the target
-      const moveFactor = ambulance.status === 'enroute' ? 0.0005 : 0.0002;
+      // Moving ambulances should get closer to the target (slower in Bangalore traffic)
+      const moveFactor = ambulance.status === 'enroute' ? 0.0003 : 0.0001; // Slower movement
       
       // Update coordinates to move toward target
       const newLongitude = ambulance.longitude + (targetLoc.longitude - ambulance.longitude) * moveFactor;
@@ -188,12 +199,12 @@ class AmbulanceTrackingService {
         ? 'arrived' 
         : ambulance.status;
       
-      // Update speed - slowing down when approaching
+      // Update speed - accounting for Bangalore traffic conditions
       const newSpeed = newStatus === 'arrived' 
         ? 0
         : ambulance.status === 'enroute'
-          ? Math.max(10, 45 - (1.7 - newDistance) * 30)
-          : 20;
+          ? Math.max(8, 35 - (1.2 - newDistance) * 25) // Lower max speed due to traffic
+          : 15;
       
       // Calculate eta based on speed and distance
       const eta = newSpeed > 0 ? Math.ceil((newDistance / newSpeed) * 60) : 0;
@@ -228,7 +239,7 @@ class AmbulanceTrackingService {
       const updatedAmbulance = {
         ...availableAmbulance,
         status: 'dispatched' as const,
-        speed: 20,
+        speed: 15, // Starting speed in Bangalore traffic
         // Calculate initial distance
         distance: this.calculateDistance(
           availableAmbulance.longitude,
@@ -238,7 +249,7 @@ class AmbulanceTrackingService {
         )
       };
       
-      // Calculate initial ETA
+      // Calculate initial ETA (accounting for traffic)
       updatedAmbulance.eta = updatedAmbulance.speed > 0 
         ? Math.ceil((updatedAmbulance.distance / updatedAmbulance.speed) * 60) 
         : 999;
@@ -252,11 +263,11 @@ class AmbulanceTrackingService {
       setTimeout(() => {
         this.ambulances = this.ambulances.map(a => 
           a.id === updatedAmbulance.id 
-            ? { ...a, status: 'enroute', speed: 45 } 
+            ? { ...a, status: 'enroute', speed: 35 } 
             : a
         );
         this.notifySubscribers();
-      }, 5000);
+      }, 8000); // Longer dispatch time
       
       // Notify subscribers
       this.notifySubscribers();

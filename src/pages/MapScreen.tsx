@@ -55,51 +55,88 @@ const MapScreen = () => {
     getActiveAmbulance
   } = useAmbulanceTracking();
   
-  // Load locations
+  // Load Bangalore locations
   useEffect(() => {
     const loadLocations = async () => {
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const mockLocations: LocationItem[] = [
+      // Bangalore emergency services data
+      const bangaloreLocations: LocationItem[] = [
         {
           id: '1',
-          name: 'City General Hospital',
+          name: 'Manipal Hospital Whitefield',
           type: 'hospital',
-          distance: 1.2,
-          address: '123 Main St, Cityville',
+          distance: 2.1,
+          address: 'Survey No. 10P & 12P, Ramagondanahalli, Whitefield, Bangalore',
           isOpen: true,
-          coordinates: { longitude: -74.0055, latitude: 40.7160 }
+          coordinates: { longitude: 77.7499, latitude: 12.9698 }
         },
         {
           id: '2',
-          name: 'Southside Medical Center',
+          name: 'Apollo Hospital Bannerghatta',
           type: 'hospital',
-          distance: 2.5,
-          address: '456 Oak Ave, Cityville',
+          distance: 3.5,
+          address: '154/11, Opposite IIM-B, Bannerghatta Road, Bangalore',
           isOpen: true,
-          coordinates: { longitude: -74.0090, latitude: 40.7110 }
+          coordinates: { longitude: 77.6068, latitude: 12.8456 }
         },
         {
           id: '3',
-          name: 'Downtown Police Station',
-          type: 'police',
-          distance: 3.1,
-          address: '789 Central Blvd, Cityville',
+          name: 'Fortis Hospital Cunningham Road',
+          type: 'hospital',
+          distance: 1.8,
+          address: '14, Cunningham Road, Bangalore',
           isOpen: true,
-          coordinates: { longitude: -74.0100, latitude: 40.7080 }
+          coordinates: { longitude: 77.5946, latitude: 12.9716 }
         },
         {
           id: '4',
-          name: 'Eastside Fire Department',
-          type: 'fire',
+          name: 'NIMHANS Hospital',
+          type: 'hospital',
           distance: 4.2,
-          address: '101 Elm St, Cityville',
+          address: 'Hosur Road, Near Dairy Circle, Bangalore',
           isOpen: true,
-          coordinates: { longitude: -73.9950, latitude: 40.7190 }
+          coordinates: { longitude: 77.5946, latitude: 12.9298 }
+        },
+        {
+          id: '5',
+          name: 'Bangalore City Police Station',
+          type: 'police',
+          distance: 1.5,
+          address: 'KR Market, Bangalore',
+          isOpen: true,
+          coordinates: { longitude: 77.5946, latitude: 12.9716 }
+        },
+        {
+          id: '6',
+          name: 'Koramangala Police Station',
+          type: 'police',
+          distance: 2.8,
+          address: '80 Feet Road, Koramangala, Bangalore',
+          isOpen: true,
+          coordinates: { longitude: 77.6271, latitude: 12.9279 }
+        },
+        {
+          id: '7',
+          name: 'Bangalore Fire Station - MG Road',
+          type: 'fire',
+          distance: 2.2,
+          address: 'Mahatma Gandhi Road, Bangalore',
+          isOpen: true,
+          coordinates: { longitude: 77.6033, latitude: 12.9716 }
+        },
+        {
+          id: '8',
+          name: 'Karnataka Fire & Emergency Services',
+          type: 'fire',
+          distance: 3.1,
+          address: 'Indiranagar, Bangalore',
+          isOpen: true,
+          coordinates: { longitude: 77.6412, latitude: 12.9784 }
         }
       ];
       
-      setLocations(mockLocations);
+      setLocations(bangaloreLocations);
       setIsLoading(false);
     };
     
@@ -165,7 +202,7 @@ const MapScreen = () => {
             >
               <ArrowLeft className="h-5 w-5 text-gray-800" />
             </button>
-            <h1 className="text-lg font-bold text-white drop-shadow-lg">Emergency Services</h1>
+            <h1 className="text-lg font-bold text-white drop-shadow-lg">Emergency Services - Bangalore</h1>
             <div className="flex items-center space-x-2">
               <button
                 onClick={toggleTracking}
@@ -183,7 +220,7 @@ const MapScreen = () => {
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-500" />
             <input
               type="text"
-              placeholder="Search hospitals, ambulances..."
+              placeholder="Search hospitals, ambulances in Bangalore..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-12 py-4 bg-white/95 backdrop-blur-sm rounded-full shadow-lg border-0 focus:outline-none focus:ring-2 focus:ring-primary/50 text-gray-800 placeholder-gray-500"
@@ -238,7 +275,7 @@ const MapScreen = () => {
           </SheetTrigger>
           <SheetContent side="bottom" className="h-[70vh] bg-white/95 backdrop-blur-sm">
             <SheetHeader>
-              <SheetTitle>Emergency Services</SheetTitle>
+              <SheetTitle>Bangalore Emergency Services</SheetTitle>
             </SheetHeader>
             <div className="space-y-4 mt-6 overflow-y-auto">
               {/* Active Ambulances */}
@@ -285,7 +322,7 @@ const MapScreen = () => {
               <div className="space-y-3">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center">
                   <Hospital className="h-5 w-5 mr-2 text-green-600" />
-                  Medical Facilities
+                  Emergency Services
                 </h3>
                 {locations.filter(location => 
                   selectedFilters.includes(location.type) && 

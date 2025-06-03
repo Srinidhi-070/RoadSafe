@@ -4,16 +4,17 @@ import { toast } from 'sonner';
 import { ambulanceService, AmbulanceVehicle } from '@/services/AmbulanceTrackingService';
 import type { MapLocation } from '@/components/MapboxMap';
 
-// Hook for tracking ambulances in real-time
+// Hook for tracking ambulances in real-time in Bangalore
 export function useAmbulanceTracking(trackingEnabled = true) {
   const [ambulances, setAmbulances] = useState<AmbulanceVehicle[]>([]);
   const [isTracking, setIsTracking] = useState(trackingEnabled);
+  // Default to Bangalore coordinates (MG Road area)
   const [userLocation, setUserLocation] = useState<{ longitude: number, latitude: number }>({
-    longitude: -74.0060, 
-    latitude: 40.7128
+    longitude: 77.5946, 
+    latitude: 12.9716
   });
   
-  // Set user location
+  // Set user location with Bangalore as fallback
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -26,7 +27,10 @@ export function useAmbulanceTracking(trackingEnabled = true) {
           ambulanceService.setUserLocation(newLocation);
         },
         () => {
-          toast.error("Could not get your precise location. Using default.");
+          toast.error("Could not get your precise location. Using Bangalore city center.");
+          // Use Bangalore coordinates as fallback
+          const bangaloreLocation = { longitude: 77.5946, latitude: 12.9716 };
+          ambulanceService.setUserLocation(bangaloreLocation);
         }
       );
     }
