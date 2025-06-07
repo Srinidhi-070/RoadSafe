@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, PanelLeft, Eye, EyeOff } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
@@ -161,11 +161,13 @@ const MapScreen = () => {
   };
   
   const toggleFilter = (filter: string) => {
-    if (selectedFilters.includes(filter)) {
-      setSelectedFilters(selectedFilters.filter(f => f !== filter));
-    } else {
-      setSelectedFilters([...selectedFilters, filter]);
-    }
+    setSelectedFilters(prev => {
+      if (prev.includes(filter)) {
+        return prev.filter(f => f !== filter);
+      } else {
+        return [...prev, filter];
+      }
+    });
   };
 
   const filterData = [
@@ -174,6 +176,14 @@ const MapScreen = () => {
     { id: 'police', label: 'Police', icon: ShieldIcon, color: 'bg-blue-600', activeColor: 'bg-blue-600 text-white' },
     { id: 'fire', label: 'Fire Dept.', icon: FlameIcon, color: 'bg-orange-600', activeColor: 'bg-orange-600 text-white' }
   ];
+
+  // Memoize filtered locations to prevent unnecessary re-renders
+  const filteredLocations = useMemo(() => {
+    return locations.filter(location => 
+      selectedFilters.includes(location.type) && 
+      (searchQuery === '' || location.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [locations, selectedFilters, searchQuery]);
 
   const getActiveAmbulanceData = getActiveAmbulance();
   
@@ -214,7 +224,7 @@ const MapScreen = () => {
           
           {/* Mobile Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500 z-10" />
             <input
               type="text"
               placeholder="Search in Bangalore..."
@@ -256,26 +266,26 @@ const MapScreen = () => {
       </div>
       
       {/* Mobile Floating Action Button */}
-      <div className="absolute bottom-28 right-4 z-20">
+      <div className="absolute bottom-28 right-4 z-30">
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
           <SheetTrigger asChild>
             <button className="p-4 rounded-full bg-primary shadow-2xl text-white active:scale-95 transition-all duration-200 transform hover:shadow-3xl">
               <PanelLeft className="h-6 w-6" />
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[85vh] bg-white/95 backdrop-blur-sm rounded-t-3xl border-t-0">
+          <SheetContent side="bottom" className="h-[85vh] bg-white/95 backdrop-blur-sm rounded-t-3xl border-t-0 z-50">
             <SheetHeader className="pb-4">
               <SheetTitle className="text-lg">Emergency Services - Bangalore</SheetTitle>
             </SheetHeader>
-            <div className="space-y-4 overflow-y-auto h-full pb-6">
+            <div className="space-y-4 overflow-y-auto h-full pb-24">
               {/* Active Ambulances - Mobile Optimized */}
               {isTracking && ambulanceLocations.length > 0 && (
                 <div className="space-y-3">
                   <h3 className="text-base font-semibold text-gray-800 flex items-center sticky top-0 bg-white/90 backdrop-blur-sm py-2 -mx-4 px-4 z-10">
                     <Ambulance className="h-4 w-4 mr-2 text-blue-600" />
-                    Live Ambulances
+                    Live Ambulances ({ambulanceLocations.length})
                   </h3>
-                  {ambulanceLocations.map((amb, index) => (
+                  {ambulanceLocations.map((amb) => (
                     <Card key={amb.id} className="overflow-hidden shadow-sm border-0 bg-white/90 backdrop-blur-sm">
                       <CardContent className="p-3">
                         <div className="flex items-center justify-between">
@@ -312,44 +322,51 @@ const MapScreen = () => {
               <div className="space-y-3">
                 <h3 className="text-base font-semibold text-gray-800 flex items-center sticky top-0 bg-white/90 backdrop-blur-sm py-2 -mx-4 px-4 z-10">
                   <Hospital className="h-4 w-4 mr-2 text-green-600" />
-                  Emergency Services
+                  Emergency Services ({filteredLocations.length})
                 </h3>
-                {locations.filter(location => 
-                  selectedFilters.includes(location.type) && 
-                  (searchQuery === '' || location.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                ).map((location, index) => (
-                  <Card key={location.id} className="overflow-hidden shadow-sm border-0 bg-white/90 backdrop-blur-sm">
-                    <CardContent className="p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3 flex-1 min-w-0">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            location.type === 'hospital' ? 'bg-green-100' : 
-                            location.type === 'police' ? 'bg-blue-100' : 'bg-orange-100'
-                          }`}>
-                            {location.type === 'hospital' && <Hospital className="h-5 w-5 text-green-600" />}
-                            {location.type === 'police' && <ShieldIcon className="h-5 w-5 text-blue-600" />}
-                            {location.type === 'fire' && <FlameIcon className="h-5 w-5 text-orange-600" />}
+                {isLoading ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                ) : filteredLocations.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No services found matching your criteria</p>
+                  </div>
+                ) : (
+                  filteredLocations.map((location) => (
+                    <Card key={location.id} className="overflow-hidden shadow-sm border-0 bg-white/90 backdrop-blur-sm">
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3 flex-1 min-w-0">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              location.type === 'hospital' ? 'bg-green-100' : 
+                              location.type === 'police' ? 'bg-blue-100' : 'bg-orange-100'
+                            }`}>
+                              {location.type === 'hospital' && <Hospital className="h-5 w-5 text-green-600" />}
+                              {location.type === 'police' && <ShieldIcon className="h-5 w-5 text-blue-600" />}
+                              {location.type === 'fire' && <FlameIcon className="h-5 w-5 text-orange-600" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-800 text-sm truncate">{location.name}</h4>
+                              <p className="text-xs text-gray-600 flex items-center truncate">
+                                <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
+                                <span className="truncate">{location.address}</span>
+                              </p>
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-gray-800 text-sm truncate">{location.name}</h4>
-                            <p className="text-xs text-gray-600 flex items-center truncate">
-                              <MapPin className="h-3 w-3 mr-1 flex-shrink-0" />
-                              <span className="truncate">{location.address}</span>
-                            </p>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-sm font-bold text-gray-800">{location.distance.toFixed(1)} km</p>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              location.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {location.isOpen ? '24/7' : 'Closed'}
+                            </span>
                           </div>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="text-sm font-bold text-gray-800">{location.distance.toFixed(1)} km</p>
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            location.isOpen ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {location.isOpen ? '24/7' : 'Closed'}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
               </div>
             </div>
           </SheetContent>
