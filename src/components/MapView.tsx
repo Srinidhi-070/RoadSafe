@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useJsApiLoader } from '@react-google-maps/api';
 import { cn } from '@/lib/utils';
@@ -34,7 +35,7 @@ const MapView: React.FC<MapViewProps> = ({
   apiKey = DEFAULT_API_KEY // Use default key if none provided
 }) => {
   const [userApiKey, setUserApiKey] = useState<string>(apiKey);
-  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(!apiKey);
+  const [showApiKeyInput, setShowApiKeyInput] = useState<boolean>(false); // Changed to false since we have a working key
   const [selectedMarker, setSelectedMarker] = useState<Location | null>(null);
   const [shouldInitialize, setShouldInitialize] = useState(!lazy);
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -63,7 +64,7 @@ const MapView: React.FC<MapViewProps> = ({
   // Load Google Maps API - with the provided API key
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: apiKey,
+    googleMapsApiKey: userApiKey,
   });
 
   // Handle API key change

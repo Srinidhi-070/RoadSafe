@@ -30,7 +30,7 @@ const Index = () => {
   // Use the ambulance tracking hook
   const { ambulanceLocations, userLocation } = useAmbulanceTracking(false);
   
-  // Update map locations when user location changes
+  // Update map locations when user location changes - FIXED: added proper dependencies
   useEffect(() => {
     if (!userLocation) return;
     
@@ -61,7 +61,7 @@ const Index = () => {
     }
     
     setMapLocations(newLocations);
-  }, [userLocation, ambulanceLocations, latestReport]);
+  }, [userLocation?.latitude, userLocation?.longitude, ambulanceLocations, latestReport?.id]); // FIXED: proper dependency array
 
   const quickActions = [
     {
@@ -213,7 +213,7 @@ const Index = () => {
               </div>
               
               {/* Add Google Maps with accident location */}
-              {userLocation && (
+              {userLocation && mapLocations.length > 0 && (
                 <div className="mb-3">
                   <MapView 
                     className="h-32 mb-2 rounded-md overflow-hidden"
@@ -222,6 +222,7 @@ const Index = () => {
                     zoom={11}
                     interactive={false}
                     lazy={true}
+                    apiKey="AIzaSyA1DUCXVkJUuzQcucV8J2Le3EHStEDNZmQ"
                   />
                 </div>
               )}
