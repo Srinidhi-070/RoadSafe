@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { mapService } from './MapService';
+import type { Location } from '@/components/MapView';
 
 export interface AmbulanceVehicle {
   id: string;
@@ -283,11 +284,11 @@ class AmbulanceTrackingService {
     return null;
   }
 
-  getAmbulanceLocations(): MapLocation[] {
+  getAmbulanceLocations(): Location[] {
     return this.ambulances.map(ambulance => ({
       id: ambulance.id,
-      longitude: ambulance.longitude,
-      latitude: ambulance.latitude,
+      lat: ambulance.latitude,
+      lng: ambulance.longitude,
       type: 'ambulance',
       name: `Ambulance ${ambulance.callSign}`,
       status: ambulance.status,
