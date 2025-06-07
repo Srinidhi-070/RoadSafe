@@ -2,16 +2,15 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ambulanceService, AmbulanceVehicle } from '@/services/AmbulanceTrackingService';
-import type { MapLocation } from '@/components/MapboxMap';
 
-// Hook for tracking ambulances in real-time in Bangalore
+// Hook for tracking ambulances in real-time in Bangalore - now using Google Maps format
 export function useAmbulanceTracking(trackingEnabled = true) {
   const [ambulances, setAmbulances] = useState<AmbulanceVehicle[]>([]);
   const [isTracking, setIsTracking] = useState(trackingEnabled);
   // Default to Bangalore coordinates (MG Road area)
-  const [userLocation, setUserLocation] = useState<{ longitude: number, latitude: number }>({
-    longitude: 77.5946, 
-    latitude: 12.9716
+  const [userLocation, setUserLocation] = useState<{ latitude: number, longitude: number }>({
+    latitude: 12.9716,
+    longitude: 77.5946
   });
   
   // Set user location with Bangalore as fallback
@@ -20,11 +19,15 @@ export function useAmbulanceTracking(trackingEnabled = true) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const newLocation = {
-            longitude: position.coords.longitude,
-            latitude: position.coords.latitude
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
           };
           setUserLocation(newLocation);
-          ambulanceService.setUserLocation(newLocation);
+          // Convert to ambulance service format (longitude, latitude)
+          ambulanceService.setUserLocation({
+            longitude: newLocation.longitude,
+            latitude: newLocation.latitude
+          });
         },
         () => {
           toast.error("Could not get your precise location. Using Bangalore city center.");
@@ -55,8 +58,17 @@ export function useAmbulanceTracking(trackingEnabled = true) {
     }
   }, [isTracking]);
   
-  // Convert ambulances to map locations
-  const ambulanceLocations: MapLocation[] = ambulanceService.getAmbulanceLocations();
+  // Convert ambulances to Google Maps compatible format
+  const ambulanceLocations = ambulances.map(amb => ({
+    id: amb.id,
+    lat: amb.latitude,
+    lng: amb.longitude,
+    type: 'ambulance' as const,
+    name: amb.name,
+    status: amb.status,
+    eta: amb.eta,
+    distance: amb.distance
+  }));
   
   const toggleTracking = () => {
     setIsTracking(prev => !prev);

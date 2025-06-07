@@ -19,9 +19,9 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
   className,
   reportLocation,
   showTracking = true,
-  showControls = false, // Default to false for mobile
+  showControls = false,
   interactive = true,
-  zoom = 15, // Higher zoom for mobile
+  zoom = 15,
 }) => {
   const { 
     ambulanceLocations, 
@@ -33,12 +33,10 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
   
   const [isLoadingMap, setIsLoadingMap] = useState(true);
   
-  // Handle map load - memoized to prevent recreating function
   const handleMapLoad = useCallback(() => {
     setIsLoadingMap(false);
   }, []);
   
-  // Get current location with high accuracy for mobile - memoized
   const handleGetCurrentLocation = useCallback(() => {
     toast.info('Getting your current location...');
     
@@ -57,7 +55,7 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
     }
   }, []);
   
-  // Convert locations to Google Maps format
+  // Convert ambulance tracking locations to Google Maps format
   const googleMapLocations = useMemo(() => {
     const newLocations: Location[] = [];
     
@@ -93,7 +91,7 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
         name: amb.name,
         status: amb.status as any,
         eta: amb.eta,
-        distance: amb.distance ? amb.distance * 1000 : undefined // Convert km to meters
+        distance: amb.distance ? amb.distance * 1000 : undefined
       }));
       return [...newLocations, ...ambulanceGoogleLocations];
     }
