@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell, FileText } from 'lucide-react';
@@ -49,19 +50,8 @@ const Index = () => {
       newLocations.push(...ambulanceLocations);
     }
     
-    // Add latest accident report if exists
-    if (latestReport) {
-      newLocations.push({
-        id: latestReport.id,
-        lat: latestReport.location.lat,
-        lng: latestReport.location.lng,
-        type: 'accident',
-        name: 'Your Recent Accident'
-      });
-    }
-    
     setMapLocations(newLocations);
-  }, [userLocation?.latitude, userLocation?.longitude, ambulanceLocations, latestReport?.id]); // FIXED: proper dependency array
+  }, [userLocation?.latitude, userLocation?.longitude, ambulanceLocations]);
 
   const quickActions = [
     {
@@ -194,52 +184,6 @@ const Index = () => {
           ))}
         </div>
       </div>
-
-      {/* Latest report if exists - with Google Maps */}
-      {latestReport && (
-        <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
-          <Card className={`border-none shadow-md ${
-            theme === 'dark' 
-              ? 'bg-gradient-to-r from-yellow-500/20 to-orange-500/10' 
-              : 'bg-gradient-to-r from-yellow-100 to-orange-50'
-          }`}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className={`font-medium text-lg ${textClass}`}>Latest Accident Report</h3>
-                <StatusBadge status={latestReport.severity} />
-              </div>
-              <div className={`text-sm ${mutedTextClass} mb-3`}>
-                {latestReport.timestamp.toLocaleString()}
-              </div>
-              
-              {/* Add Google Maps with accident location */}
-              {userLocation && mapLocations.length > 0 && (
-                <div className="mb-3">
-                  <MapView 
-                    className="h-32 mb-2 rounded-md overflow-hidden"
-                    locations={mapLocations}
-                    centerLocation={{ lat: userLocation.latitude, lng: userLocation.longitude }}
-                    zoom={11}
-                    interactive={false}
-                    lazy={true}
-                    apiKey="AIzaSyA1DUCXVkJUuzQcucV8J2Le3EHStEDNZmQ"
-                  />
-                </div>
-              )}
-              
-              <div className={`mb-4 ${theme === 'dark' ? 'text-white/90' : 'text-gray-800'}`}>
-                {latestReport.description || 'No description provided.'}
-              </div>
-              <button 
-                className={`flex items-center text-sm ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'} font-medium`}
-                onClick={() => navigate(`/report/${latestReport.id}`)}
-              >
-                View details <ArrowRight className="ml-1 h-4 w-4" />
-              </button>
-            </CardContent>
-          </Card>
-        </AnimatedContainer>
-      )}
     </div>
   );
 };
