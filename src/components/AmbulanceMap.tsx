@@ -85,8 +85,8 @@ const AmbulanceMap: React.FC<AmbulanceMapProps> = ({
     if (showTracking && isTracking) {
       const ambulanceGoogleLocations: Location[] = ambulanceLocations.map(amb => ({
         id: amb.id,
-        lat: amb.latitude,
-        lng: amb.longitude,
+        lat: amb.lat,
+        lng: amb.lng,
         type: 'ambulance',
         name: amb.name,
         status: amb.status as any,

@@ -1,5 +1,4 @@
 import { toast } from 'sonner';
-import type { MapLocation } from '@/components/MapboxMap';
 import { mapService } from './MapService';
 
 export interface AmbulanceVehicle {

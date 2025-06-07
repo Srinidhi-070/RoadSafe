@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageCircle, Shield, MapPin, Users, ArrowRight, Hospital, Plus, Bell, FileText } from 'lucide-react';
@@ -10,8 +9,8 @@ import { useEmergency } from '@/contexts/EmergencyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Card, CardContent } from '@/components/ui/card';
-import MapboxMap, { MapLocation } from '@/components/MapboxMap';
-import { useMapboxAmbulanceTracking } from '@/hooks/useMapboxAmbulanceTracking';
+import MapView, { Location } from '@/components/MapView';
+import { useAmbulanceTracking } from '@/hooks/useAmbulanceTracking';
 import { toast } from 'sonner';
 
 const Index = () => {
@@ -26,20 +25,20 @@ const Index = () => {
     ? reports.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0]
     : null;
   
-  const [mapLocations, setMapLocations] = useState<MapLocation[]>([]);
+  const [mapLocations, setMapLocations] = useState<Location[]>([]);
   
-  // Use the Mapbox ambulance tracking hook
-  const { ambulanceLocations, userLocation } = useMapboxAmbulanceTracking(false);
+  // Use the ambulance tracking hook
+  const { ambulanceLocations, userLocation } = useAmbulanceTracking(false);
   
   // Update map locations when user location changes
   useEffect(() => {
     if (!userLocation) return;
     
-    const newLocations: MapLocation[] = [
+    const newLocations: Location[] = [
       {
         id: 'user',
-        longitude: userLocation.longitude,
-        latitude: userLocation.latitude,
+        lat: userLocation.latitude,
+        lng: userLocation.longitude,
         type: 'user',
         name: 'Your Location'
       }
@@ -54,8 +53,8 @@ const Index = () => {
     if (latestReport) {
       newLocations.push({
         id: latestReport.id,
-        longitude: latestReport.location.lng,
-        latitude: latestReport.location.lat,
+        lat: latestReport.location.lat,
+        lng: latestReport.location.lng,
         type: 'accident',
         name: 'Your Recent Accident'
       });
@@ -196,7 +195,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Latest report if exists - with Mapbox map */}
+      {/* Latest report if exists - with Google Maps */}
       {latestReport && (
         <AnimatedContainer animation="fade-in" delay={200} className="mb-8">
           <Card className={`border-none shadow-md ${
@@ -213,13 +212,13 @@ const Index = () => {
                 {latestReport.timestamp.toLocaleString()}
               </div>
               
-              {/* Add Mapbox map with accident location */}
+              {/* Add Google Maps with accident location */}
               {userLocation && (
                 <div className="mb-3">
-                  <MapboxMap 
+                  <MapView 
                     className="h-32 mb-2 rounded-md overflow-hidden"
                     locations={mapLocations}
-                    centerLocation={userLocation}
+                    centerLocation={{ lat: userLocation.latitude, lng: userLocation.longitude }}
                     zoom={11}
                     interactive={false}
                     lazy={true}

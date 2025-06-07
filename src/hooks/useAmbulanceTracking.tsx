@@ -64,7 +64,7 @@ export function useAmbulanceTracking(trackingEnabled = true) {
     lat: amb.latitude,
     lng: amb.longitude,
     type: 'ambulance' as const,
-    name: amb.name,
+    name: amb.callSign,
     status: amb.status,
     eta: amb.eta,
     distance: amb.distance
