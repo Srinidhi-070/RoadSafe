@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ambulance Notification Dashboard</title>
+    <style>
+        body { font-family: Arial; background-color: #fffaf0; padding: 20px; }
+        .alert-box {
+            background-color: #e0f7fa;
+            border-left: 6px solid #0288d1;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        img {
+            max-width: 400px;
+            margin-top: 10px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+    <h2>🚑 Ambulance Notification Dashboard</h2>
+    <div id="alertArea"></div>
+
+    <script>
+        const socket = io();
+
+        socket.on('emergency_alert', function(data) {
+            const container = document.getElementById("alertArea");
+            const div = document.createElement("div");
+            div.className = "alert-box";
+
+            let items = Object.entries(data.counts).map(([cls, count]) => `${cls}: ${count}`).join(", ");
+
+            div.innerHTML = `
+                <strong>🚨 Emergency Alert Received!</strong><br>
+                Location: [${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}]<br>
+                Time: ${data.timestamp}<br>
+                Severity: <b>${data.severity}</b><br>
+                Detected Objects: ${items}<br>
+                <img src="${data.image}" alt="Accident Image"><br>
+                <button onclick='acceptEmergency(${JSON.stringify(JSON.stringify(data))})'>✅ Accept</button>
+            `;
+            container.prepend(div);
+        });
+
+        function acceptEmergency(dataStr) {
+            const data = JSON.parse(dataStr);
+            socket.emit("ambulance_accept", data);
+            alert("✅ Emergency Accepted. You will be navigated shortly.");
+        }
+
+        socket.on("ambulance_assigned", function(data) {
+            alert("🚑 Ambulance assigned! Get ready for navigation...");
+
+            const div = document.createElement("div");
+            div.className = "alert-box";
+            div.innerHTML = `
+                <strong>📍 Assigned Dummy Ambulance Location:</strong><br>
+                Latitude: ${data.ambulance_lat.toFixed(5)}, Longitude: ${data.ambulance_lon.toFixed(5)}<br><br>
+                Navigating to accident at:<br>
+                Latitude: ${data.accident_lat.toFixed(5)}, Longitude: ${data.accident_lon.toFixed(5)}<br><br>
+                Severity: <b>${data.severity}</b><br>
+                Time: ${data.timestamp}<br>
+                <img src="${data.image}" alt="Accident Image">
+            `;
+            document.body.appendChild(div);
+        });
+    </script>
+</body>
+</html>
