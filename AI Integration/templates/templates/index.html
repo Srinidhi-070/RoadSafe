@@ -1,0 +1,206 @@
+<!-- Keep all previous <head> as it is -->
+<head>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+    #notifyStatus {
+        margin-top: 15px;
+        font-weight: bold;
+        color: #0066cc;
+        font-size: 16px;
+        animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 0.2; }
+        50% { opacity: 1; }
+        100% { opacity: 0.2; }
+    }
+    #ambulanceAlert {
+        margin-top: 15px;
+        font-weight: bold;
+        color: #cc0000;
+        font-size: 18px;
+        background-color: #ffe6e6;
+        padding: 10px;
+        border: 1px solid #cc0000;
+        border-radius: 5px;
+        display: none;
+    }
+    </style>
+</head>
+<body>
+    <h2>Capture Image from Camera</h2>
+    <video id="video" width="640" height="480" autoplay></video><br>
+    <button id="snap">Capture</button>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas><br>
+    <img id="capturedImage" src="" alt="Captured Image" width="320" height="240" /><br>
+    <button id="upload" disabled>Upload for Classification</button>
+    <button id="notifyBtn" disabled>Notify Emergency Services</button>
+    <div id="result"></div>
+    <div id="serviceList"></div>
+    <div id="successSummary" class="success-msg"></div>
+    <div id="notifyStatus" style="display: none;"></div>
+
+    <!-- NEW ambulance alert notification -->
+    <div id="ambulanceAlert"></div>
+    <!-- 🚑 Route Map -->
+    <div id="map" style="height: 400px; margin-top: 20px;"></div>
+
+
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const snap = document.getElementById('snap');
+    const upload = document.getElementById('upload');
+    const capturedImage = document.getElementById('capturedImage');
+    const resultDiv = document.getElementById('result');
+    const notifyBtn = document.getElementById('notifyBtn');
+    const serviceList = document.getElementById('serviceList');
+    const successSummary = document.getElementById('successSummary');
+    const ambulanceAlert = document.getElementById('ambulanceAlert');
+
+    let userLatitude = null, userLongitude = null;
+
+    // Camera setup
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { video.srcObject = stream; })
+        .catch(err => { alert("Camera error: " + err); });
+
+    // Geolocation setup
+    navigator.geolocation.getCurrentPosition((position) => {
+        userLatitude = position.coords.latitude;
+        userLongitude = position.coords.longitude;
+    }, (error) => {
+        alert("Location error: " + error.message);
+    });
+
+    snap.addEventListener('click', () => {
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/png');
+        capturedImage.src = dataURL;
+        upload.disabled = false;
+        resultDiv.innerHTML = "";
+        serviceList.innerHTML = "";
+        successSummary.innerHTML = "";
+        ambulanceAlert.style.display = 'none';  // Hide ambulance alert on new capture
+    });
+
+    upload.addEventListener('click', () => {
+        const dataURL = canvas.toDataURL('image/png');
+        fetch('/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: dataURL })
+        })
+        .then(response => response.json())
+        .then(data => {
+            resultDiv.innerHTML = `
+                <h3>Severity: ${data.severity}</h3>
+                <p>Total Evidence Score: ${data.total_score}</p>
+                <pre>Detected Counts: ${JSON.stringify(data.counts, null, 2)}</pre>
+            `;
+            notifyBtn.disabled = false;
+        });
+    });
+
+    notifyBtn.addEventListener('click', () => {
+        if (!userLatitude || !userLongitude) {
+            alert("Location not found.");
+            return;
+        }
+
+        fetch('/get_nearby_services', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ latitude: userLatitude, longitude: userLongitude })
+        })
+        .then(res => res.json())
+        .then(data => {
+            const hospitals = data.filter(s => s.type === "hospital");
+            const police = data.filter(s => s.type === "police");
+            const fire = data.filter(s => s.type === "fire_station");
+
+            function createServiceList(services, iconPath, label) {
+                return `
+                    <h4><img src="public/icons/${iconPath}" width="20" style="vertical-align: middle;"> ${label}</h4>
+                    <ul>
+                    ${services.map(s => `<li><b>${s.name}</b> [${s.lat.toFixed(4)}, ${s.lon.toFixed(4)}]</li>`).join("") || "<li>None found</li>"}
+                    </ul>
+                `;
+            }
+
+            serviceList.innerHTML = `
+                <h3>Nearby Emergency Services:</h3>
+                <div style="display: flex; justify-content: space-between; gap: 20px;">
+                    <div style="flex: 1;">${createServiceList(hospitals, "hospital.png", "Hospital")}</div>
+                    <div style="flex: 1;">${createServiceList(police, "police.png", "Police Station")}</div>
+                    <div style="flex: 1;">${createServiceList(fire, "fire_station.png", "Fire Station")}</div>
+                </div>
+                <br>
+                <button id="notifyAllBtn" style="padding: 10px 20px; font-size: 16px;">Notify All Emergency Services 🚨</button>
+            `;
+
+            document.getElementById("notifyAllBtn").addEventListener("click", () => {
+                const statusEl = document.getElementById("notifyStatus");
+                statusEl.innerText = "📡 Sending alert to emergency services...";
+                statusEl.style.display = "block";
+
+                setTimeout(() => {
+                    fetch('/notify_all_services', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ location: { latitude: userLatitude, longitude: userLongitude } })
+                    }).then(() => {
+                        document.getElementById("notifyAllBtn").disabled = true;
+                        successSummary.innerHTML = "✅ All emergency services have been notified and logged.";
+                        statusEl.style.display = "none";
+                        setTimeout(() => { successSummary.innerHTML = ""; }, 6000);
+                    });
+                }, 1500); // 1.5 second delay
+            });
+        });
+    });
+
+    // Socket.IO connection for ambulance assignment and route updates
+    const socket = io();
+
+    socket.on("ambulance_assigned", (data) => {
+        // Show a visible alert message with ambulance assignment details
+        ambulanceAlert.style.display = 'block';
+        function getDistanceInKm(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of Earth in km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos(lat1 * Math.PI / 180) *
+                Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon / 2) ** 2;
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c;
+        }
+
+        const distanceKm = getDistanceInKm(
+            data.ambulance_lat,
+            data.ambulance_lon,
+            data.accident_lat,
+            data.accident_lon
+        ).toFixed(2);
+
+        ambulanceAlert.innerHTML = `
+            🚑 Ambulance Assigned!<br>
+            Ambulance Location: [${data.ambulance_lat.toFixed(4)}, ${data.ambulance_lon.toFixed(4)}]<br>
+            Accident Location: [${data.accident_lat.toFixed(4)}, ${data.accident_lon.toFixed(4)}]<br>
+            Severity: <b>${data.severity}</b><br>
+            Distance to Accident: <b>${distanceKm} km</b>
+        `;
+
+    });
+    </script>
+    <script src="/public/js/script.js"></script>
+</body>
+</html>
