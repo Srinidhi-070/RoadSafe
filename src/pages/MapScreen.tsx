@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, MapPin, Locate, Hospital, Ambulance, Filter, PanelLeft, Eye, EyeOff } from 'lucide-react';
@@ -10,6 +9,7 @@ import { toast } from 'sonner';
 import AmbulanceMap from '@/components/AmbulanceMap';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
+import AiMapAssistant from '@/components/AiMapAssistant';
 
 interface LocationItem {
   id: string;
@@ -43,6 +43,7 @@ const MapScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFilters, setSelectedFilters] = useState<string[]>(['hospital', 'ambulance']);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [aiAssistantVisible, setAiAssistantVisible] = useState(false);
   
   const [locations, setLocations] = useState<LocationItem[]>([]);
   
@@ -421,6 +422,14 @@ const MapScreen = () => {
           </div>
         </div>
       )}
+      
+      {/* AI Map Assistant */}
+      <AiMapAssistant
+        userLocation={userLocation}
+        emergencyType="general"
+        isVisible={aiAssistantVisible}
+        onToggle={() => setAiAssistantVisible(!aiAssistantVisible)}
+      />
       
       <BottomNavigation />
     </div>

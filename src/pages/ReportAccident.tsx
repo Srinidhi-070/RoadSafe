@@ -1,10 +1,13 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, ArrowLeft, Upload, Check, Loader2 } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Upload, Check, Loader2, Brain } from 'lucide-react';
 import ImageUploader from '@/components/ImageUploader';
 import StatusBadge from '@/components/StatusBadge';
 import AnimatedContainer from '@/components/AnimatedContainer';
+import AiEmergencyAnalysis from '@/components/AiEmergencyAnalysis';
 import { useEmergency } from '@/contexts/EmergencyContext';
+import { enhancedAiService } from '@/services/EnhancedAiService';
 import { toast } from 'sonner';
 
 const ReportAccident = () => {
@@ -16,8 +19,12 @@ const ReportAccident = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<{
     severity: 'minor' | 'moderate' | 'severe';
+    recommendedServices: string[];
+    immediateActions: string[];
     confidence: number;
+    description: string;
   } | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number; address?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleImageSelect = (file: File) => {
@@ -31,18 +38,22 @@ const ReportAccident = () => {
     setIsAnalyzing(true);
     
     try {
-      // Simulate AI analysis with a delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Convert image to base64 for analysis
+      const reader = new FileReader();
+      reader.readAsDataURL(image);
       
-      // Mock analysis result for demo
-      const mockSeverities: ('minor' | 'moderate' | 'severe')[] = ['minor', 'moderate', 'severe'];
-      const mockResult = {
-        severity: mockSeverities[Math.floor(Math.random() * 3)],
-        confidence: Math.round((0.7 + Math.random() * 0.25) * 100) / 100 // Between 0.7 and 0.95
-      };
+      const imageBase64 = await new Promise<string>((resolve) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result);
+        };
+      });
       
-      setAnalysisResult(mockResult);
-      toast.success('Image analysis completed');
+      // Use enhanced AI service for analysis
+      const analysis = await enhancedAiService.analyzeEmergencyImage(imageBase64);
+      setAnalysisResult(analysis);
+      
+      toast.success('AI analysis completed');
     } catch (error) {
       console.error('Error analyzing image:', error);
       toast.error('Failed to analyze image. Please try again.');
@@ -71,7 +82,7 @@ const ReportAccident = () => {
         };
       });
       
-      // Use browser geolocation API to get current location
+      // Get current location
       const position = await new Promise<GeolocationPosition>((resolve, reject) => {
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
@@ -80,13 +91,16 @@ const ReportAccident = () => {
         });
       });
       
+      const location = {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude
+      };
+      setUserLocation(location);
+      
       const reportId = await createReport({
-        location: {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude
-        },
+        location,
         severity: analysisResult.severity,
-        description,
+        description: description || analysisResult.description,
         images: [imageBase64]
       });
       
@@ -111,23 +125,32 @@ const ReportAccident = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-semibold">Report Accident</h1>
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold">AI-Enhanced Emergency Report</h1>
+            <p className="text-sm text-muted-foreground">Advanced AI analysis for accurate emergency response</p>
+          </div>
         </div>
       </AnimatedContainer>
       
       {/* Instructions */}
       <AnimatedContainer animation="fade-in" delay={100} className="mb-6">
-        <div className="bg-muted rounded-lg p-4">
-          <p className="text-sm">
-            Upload an image of the accident scene. Our AI will analyze the severity and help coordinate emergency response.
-          </p>
+        <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 border">
+          <div className="flex items-start space-x-3">
+            <Brain className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-sm font-medium mb-1">Enhanced AI Analysis</p>
+              <p className="text-xs text-muted-foreground">
+                Our advanced AI will analyze your emergency image to determine severity, recommend appropriate services, and provide immediate action guidance.
+              </p>
+            </div>
+          </div>
         </div>
       </AnimatedContainer>
       
       {/* Image upload */}
       <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
         <div className="space-y-4">
-          <h2 className="font-medium">Accident Image</h2>
+          <h2 className="font-medium">Emergency Scene Image</h2>
           <ImageUploader 
             onImageSelect={handleImageSelect}
             className="min-h-48"
@@ -137,17 +160,17 @@ const ReportAccident = () => {
             <button
               onClick={analyzeImage}
               disabled={isAnalyzing}
-              className="w-full flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-70"
+              className="w-full flex items-center justify-center bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-primary-foreground py-3 px-4 rounded-lg font-medium transition-all duration-200 disabled:opacity-70 shadow-lg"
             >
               {isAnalyzing ? (
                 <>
                   <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                  Analyzing Image...
+                  Analyzing with Advanced AI...
                 </>
               ) : (
                 <>
-                  <Upload className="h-5 w-5 mr-2" />
-                  Analyze with AI
+                  <Brain className="h-5 w-5 mr-2" />
+                  Analyze with Enhanced AI
                 </>
               )}
             </button>
@@ -155,36 +178,13 @@ const ReportAccident = () => {
         </div>
       </AnimatedContainer>
       
-      {/* Analysis result */}
+      {/* AI Analysis Results */}
       {analysisResult && (
         <AnimatedContainer animation="scale-in" className="mb-6">
-          <div className="bg-card border rounded-lg p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium">AI Analysis Results</h3>
-              <Check className="h-5 w-5 text-success" />
-            </div>
-            
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Severity:</span>
-                <StatusBadge status={analysisResult.severity} />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Confidence:</span>
-                <span className="font-medium">{Math.round(analysisResult.confidence * 100)}%</span>
-              </div>
-            </div>
-            
-            {analysisResult.severity === 'severe' && (
-              <div className="flex items-start bg-emergency/10 text-emergency rounded-md p-3">
-                <AlertTriangle className="h-5 w-5 mr-2 flex-shrink-0 mt-0.5" />
-                <p className="text-sm">
-                  This appears to be a severe accident. We recommend immediate emergency services dispatch.
-                </p>
-              </div>
-            )}
-          </div>
+          <AiEmergencyAnalysis 
+            analysis={analysisResult} 
+            location={userLocation || undefined}
+          />
         </AnimatedContainer>
       )}
       
@@ -198,7 +198,7 @@ const ReportAccident = () => {
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe the accident situation, any injuries, or other important details..."
+            placeholder="Describe the emergency situation, any injuries, or other important details..."
             className="w-full min-h-24 p-3 border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
@@ -209,15 +209,18 @@ const ReportAccident = () => {
         <button
           onClick={handleSubmitReport}
           disabled={!image || !analysisResult || isSubmitting}
-          className="w-full flex items-center justify-center bg-emergency hover:bg-emergency/90 text-emergency-foreground py-4 px-6 rounded-lg font-medium transition-colors disabled:opacity-70"
+          className="w-full flex items-center justify-center bg-gradient-to-r from-emergency to-emergency/80 hover:from-emergency/90 hover:to-emergency/70 text-emergency-foreground py-4 px-6 rounded-lg font-medium transition-all duration-200 disabled:opacity-70 shadow-lg"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-              Submitting Report...
+              Submitting Emergency Report...
             </>
           ) : (
-            'Submit Emergency Report'
+            <>
+              <Brain className="h-5 w-5 mr-2" />
+              Submit AI-Enhanced Report
+            </>
           )}
         </button>
       </AnimatedContainer>
