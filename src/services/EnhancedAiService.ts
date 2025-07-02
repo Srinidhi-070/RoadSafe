@@ -60,7 +60,7 @@ export class EnhancedAiService {
       const locationContext = location ? 
         `Location: ${location.address || `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}. ` : '';
       
-      const prompt = `${locationContext}Emergency situation: ${situation}. Provide immediate first aid guidance and emergency response steps.`;
+      const prompt = `${locationContext}Emergency situation: ${situation}. Provide immediate first aid guidance and emergency response steps for Indian emergency services.`;
       
       if (this.apiKey) {
         return await getAiResponse(prompt, this.apiKey);
@@ -80,11 +80,11 @@ export class EnhancedAiService {
     
     switch (emergencyType.toLowerCase()) {
       case 'medical':
-        return ['Nearest Hospital', 'Emergency Medical Services', 'Pharmacy'];
+        return ['Nearest Hospital', 'Ambulance (108)', 'Pharmacy'];
       case 'fire':
-        return ['Fire Department', 'Emergency Services', 'Hospital'];
+        return ['Fire Department (101)', 'Emergency Services', 'Hospital'];
       case 'crime':
-        return ['Police Station', 'Emergency Services', 'Safe Location'];
+        return ['Police Station (100)', 'Emergency Services', 'Safe Location'];
       default:
         return baseServices;
     }
@@ -93,11 +93,11 @@ export class EnhancedAiService {
   private getServiceRecommendations(severity: string): string[] {
     switch (severity) {
       case 'severe':
-        return ['Ambulance', 'Police', 'Fire Department', 'Hospital'];
+        return ['Ambulance (108)', 'Police (100)', 'Fire Department (101)', 'Hospital'];
       case 'moderate':
-        return ['Ambulance', 'Police', 'Hospital'];
+        return ['Ambulance (108)', 'Police (100)', 'Hospital'];
       case 'minor':
-        return ['Police', 'Medical Services'];
+        return ['Police (100)', 'Medical Services'];
       default:
         return ['Emergency Services'];
     }
@@ -107,7 +107,7 @@ export class EnhancedAiService {
     switch (severity) {
       case 'severe':
         return [
-          'Contact emergency services immediately',
+          'Call 100 (Police), 101 (Fire), or 108 (Ambulance) immediately',
           'Ensure scene safety',
           'Check for injuries',
           'Provide first aid if trained',
@@ -115,7 +115,7 @@ export class EnhancedAiService {
         ];
       case 'moderate':
         return [
-          'Contact emergency services',
+          'Call appropriate emergency services (100/101/108)',
           'Check for injuries',
           'Move to safety if possible',
           'Document the scene'
@@ -146,7 +146,7 @@ export class EnhancedAiService {
   }
 
   private getFallbackGuidance(situation: string): string {
-    return `Emergency guidance for: ${situation}\n\n1. Ensure your safety first\n2. Contact emergency services if needed\n3. Provide first aid if trained\n4. Stay calm and follow emergency protocols\n\nFor specific medical emergencies, always consult with emergency services immediately.`;
+    return `Emergency guidance for: ${situation}\n\n1. Ensure your safety first\n2. Call appropriate Indian emergency services:\n   - Police: 100\n   - Fire: 101\n   - Ambulance: 108\n3. Provide first aid if trained\n4. Stay calm and follow emergency protocols\n\nFor specific medical emergencies, always call 108 for ambulance services immediately.`;
   }
 }
 

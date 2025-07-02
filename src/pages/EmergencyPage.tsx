@@ -28,8 +28,8 @@ const EmergencyPage = () => {
   };
 
   const callEmergencyServices = () => {
-    // In a real app, this would initiate a call to local emergency services
-    toast.success('Calling emergency services...');
+    // In a real app, this would initiate a call to Indian emergency services
+    toast.success('Calling 100 (Police) / 101 (Fire) / 108 (Ambulance)...');
   };
 
   const shareLocation = () => {
@@ -56,7 +56,7 @@ const EmergencyPage = () => {
           <AlertTriangle className="h-12 w-12 text-emergency mx-auto mb-4" />
           <h1 className="text-2xl font-bold mb-2">Emergency Services</h1>
           <p className="text-muted-foreground">
-            Quick access to emergency services and your emergency contacts
+            Quick access to Indian emergency services and your emergency contacts
           </p>
         </div>
       </AnimatedContainer>
@@ -78,6 +78,22 @@ const EmergencyPage = () => {
               <Phone className="h-5 w-5 mr-2" />
               Call Emergency Services
             </button>
+            
+            {/* Indian Emergency Numbers */}
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <div className="text-center p-2 bg-muted/50 rounded">
+                <div className="font-bold">100</div>
+                <div className="text-muted-foreground">Police</div>
+              </div>
+              <div className="text-center p-2 bg-muted/50 rounded">
+                <div className="font-bold">101</div>
+                <div className="text-muted-foreground">Fire</div>
+              </div>
+              <div className="text-center p-2 bg-muted/50 rounded">
+                <div className="font-bold">108</div>
+                <div className="text-muted-foreground">Ambulance</div>
+              </div>
+            </div>
             
             <button
               onClick={shareLocation}
