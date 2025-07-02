@@ -1,172 +1,175 @@
 
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AlertTriangle, Phone, ArrowLeft, Heart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { useEmergency } from '@/contexts/EmergencyContext';
+import React, { useState } from 'react';
+import { Phone, MapPin, Clock, AlertTriangle, Heart, Shield } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AnimatedContainer from '@/components/AnimatedContainer';
-import { Card, CardContent } from '@/components/ui/card';
+import { useEmergency } from '@/contexts/EmergencyContext';
+import EmergencyContact from '@/components/EmergencyContact';
+import { toast } from 'sonner';
 
 const EmergencyPage = () => {
-  const navigate = useNavigate();
-  const { contacts, createReport } = useEmergency();
-  const [isContacting, setIsContacting] = useState(true);
-  const [countdown, setCountdown] = useState(5);
-  const [emergencyStatus, setEmergencyStatus] = useState('initializing');
+  const { contacts } = useEmergency();
+  const [newContact, setNewContact] = useState({
+    name: '',
+    phone: '',
+    relationship: ''
+  });
+  const { addContact } = useEmergency();
 
-  useEffect(() => {
-    // Simulate emergency services being contacted
-    if (isContacting) {
-      const timer = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            setIsContacting(false);
-            setEmergencyStatus('contacting');
-            // Simulate creating an emergency report
-            handleCreateEmergencyReport();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-      
-      return () => clearInterval(timer);
+  const handleAddContact = () => {
+    if (!newContact.name || !newContact.phone) {
+      toast.error('Please fill in name and phone number');
+      return;
     }
-  }, [isContacting]);
 
-  const handleCreateEmergencyReport = async () => {
-    try {
-      // Create a report with default severe status
-      await createReport({
-        location: {
-          lat: 37.7749, // Default location (can be replaced with actual geolocation)
-          lng: -122.4194
-        },
-        severity: 'severe',
-        description: 'Emergency button activated by user',
-      });
-      
-      setEmergencyStatus('dispatched');
-    } catch (error) {
-      console.error('Failed to create emergency report:', error);
-      setEmergencyStatus('failed');
-    }
+    addContact(newContact);
+    setNewContact({ name: '', phone: '', relationship: '' });
+    toast.success('Emergency contact added');
   };
 
-  const handleCancel = () => {
-    navigate('/');
+  const callEmergencyServices = () => {
+    // In a real app, this would initiate a call to local emergency services
+    toast.success('Calling emergency services...');
+  };
+
+  const shareLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          // In a real app, this would share location with emergency services
+          toast.success(`Location shared: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`);
+        },
+        () => {
+          toast.error('Unable to get location');
+        }
+      );
+    } else {
+      toast.error('Geolocation not supported');
+    }
   };
 
   return (
-    <div className="min-h-screen pt-6 pb-20 px-4 bg-gradient-to-b from-background to-background/80">
-      <AnimatedContainer animation="fade-in" className="mb-4">
-        <div className="flex items-center mb-6">
-          <Button 
-            variant="ghost" 
-            className="p-0 mr-2" 
-            onClick={handleCancel}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-2xl font-bold">Emergency Response</h1>
+    <div className="min-h-screen pt-6 pb-20 px-4">
+      <AnimatedContainer className="mb-6">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-emergency mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Emergency Services</h1>
+          <p className="text-muted-foreground">
+            Quick access to emergency services and your emergency contacts
+          </p>
         </div>
       </AnimatedContainer>
 
-      {/* Status alert */}
-      <AnimatedContainer animation="scale-in" className="mb-8">
-        <Alert variant="destructive" className="border-emergency bg-emergency/10 shadow-md">
-          <AlertTriangle className="h-5 w-5" />
-          <AlertTitle className="text-emergency font-bold text-lg">
-            Emergency Assistance Requested
-          </AlertTitle>
-          <AlertDescription className="mt-2">
-            {isContacting ? (
-              <span className="text-base">Contacting emergency services in <span className="font-bold text-emergency">{countdown}</span> seconds...</span>
-            ) : emergencyStatus === 'contacting' ? (
-              <span className="text-base">Contacting emergency services...</span>
-            ) : emergencyStatus === 'dispatched' ? (
-              <span className="text-base">Emergency services have been notified and are on the way!</span>
-            ) : (
-              <span className="text-base">Failed to contact emergency services. Please try calling directly.</span>
-            )}
-          </AlertDescription>
-        </Alert>
-      </AnimatedContainer>
-
-      {/* Emergency actions */}
-      <AnimatedContainer animation="fade-in" delay={200} className="space-y-5 mb-8">
-        <h2 className="text-xl font-semibold mb-3">Emergency Contacts</h2>
-        
-        {/* Default emergency services */}
-        <Card className="border-none shadow-lg bg-card hover:shadow-xl transition-all duration-300">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <div className="bg-emergency/15 rounded-full p-3 mr-4">
-                  <Phone className="h-6 w-6 text-emergency" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-lg">Emergency Services</h3>
-                  <p className="text-sm text-muted-foreground">911</p>
-                </div>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="border-emergency text-emergency hover:bg-emergency/10 font-medium"
-                onClick={() => window.open('tel:911')}
-              >
-                Call Now
-              </Button>
-            </div>
+      {/* Quick Emergency Actions */}
+      <AnimatedContainer animation="fade-in" delay={100} className="mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Shield className="h-5 w-5 mr-2 text-emergency" />
+              Quick Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <button
+              onClick={callEmergencyServices}
+              className="w-full flex items-center justify-center bg-emergency hover:bg-emergency/90 text-white py-4 px-6 rounded-lg font-medium transition-colors"
+            >
+              <Phone className="h-5 w-5 mr-2" />
+              Call Emergency Services
+            </button>
+            
+            <button
+              onClick={shareLocation}
+              className="w-full flex items-center justify-center bg-primary hover:bg-primary/90 text-primary-foreground py-3 px-6 rounded-lg font-medium transition-colors"
+            >
+              <MapPin className="h-5 w-5 mr-2" />
+              Share My Location
+            </button>
           </CardContent>
         </Card>
-        
-        {/* User's emergency contacts */}
-        {contacts.map((contact) => (
-          <Card 
-            key={contact.id}
-            className="border-none shadow-lg bg-card hover:shadow-xl transition-all duration-300"
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="bg-primary/15 rounded-full p-3 mr-4">
-                    <Heart className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-lg">{contact.name}</h3>
-                    <p className="text-sm text-muted-foreground">{contact.relationship}</p>
-                  </div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="font-medium"
-                  onClick={() => window.open(`tel:${contact.phone}`)}
-                >
-                  Call
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
       </AnimatedContainer>
 
-      {/* Cancel button */}
-      {isContacting && (
-        <AnimatedContainer animation="fade-in" delay={300}>
-          <Button 
-            variant="outline" 
-            className="w-full border-destructive text-destructive text-base py-6 shadow-md"
-            onClick={handleCancel}
-          >
-            Cancel Emergency
-          </Button>
-        </AnimatedContainer>
-      )}
+      {/* Emergency Contacts */}
+      <AnimatedContainer animation="fade-in" delay={200} className="mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center text-lg">
+              <Heart className="h-5 w-5 mr-2 text-primary" />
+              Emergency Contacts
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {contacts.length > 0 ? (
+              contacts.map((contact) => (
+                <EmergencyContact
+                  key={contact.id}
+                  name={contact.name}
+                  phone={contact.phone}
+                  relationship={contact.relationship}
+                  onCall={() => toast.success(`Calling ${contact.name}...`)}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Heart className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium mb-2">No Emergency Contacts</p>
+                <p className="text-sm">Add trusted contacts for quick access during emergencies</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </AnimatedContainer>
+
+      {/* Add New Contact */}
+      <AnimatedContainer animation="fade-in" delay={300}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Add Emergency Contact</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Name</label>
+              <input
+                type="text"
+                value={newContact.name}
+                onChange={(e) => setNewContact(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Enter contact name"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Phone Number</label>
+              <input
+                type="tel"
+                value={newContact.phone}
+                onChange={(e) => setNewContact(prev => ({ ...prev, phone: e.target.value }))}
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="Enter phone number"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Relationship</label>
+              <input
+                type="text"
+                value={newContact.relationship}
+                onChange={(e) => setNewContact(prev => ({ ...prev, relationship: e.target.value }))}
+                className="w-full px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="e.g., Spouse, Doctor, Family"
+              />
+            </div>
+            
+            <button
+              onClick={handleAddContact}
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 px-4 rounded-md font-medium transition-colors"
+            >
+              Add Contact
+            </button>
+          </CardContent>
+        </Card>
+      </AnimatedContainer>
     </div>
   );
 };

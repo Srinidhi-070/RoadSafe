@@ -107,7 +107,7 @@ export class EnhancedAiService {
     switch (severity) {
       case 'severe':
         return [
-          'Call emergency services immediately',
+          'Contact emergency services immediately',
           'Ensure scene safety',
           'Check for injuries',
           'Provide first aid if trained',
@@ -115,7 +115,7 @@ export class EnhancedAiService {
         ];
       case 'moderate':
         return [
-          'Call emergency services',
+          'Contact emergency services',
           'Check for injuries',
           'Move to safety if possible',
           'Document the scene'
@@ -128,7 +128,7 @@ export class EnhancedAiService {
           'Contact insurance if needed'
         ];
       default:
-        return ['Assess the situation', 'Call for help if needed'];
+        return ['Assess the situation', 'Contact help if needed'];
     }
   }
 
@@ -146,7 +146,7 @@ export class EnhancedAiService {
   }
 
   private getFallbackGuidance(situation: string): string {
-    return `Emergency guidance for: ${situation}\n\n1. Ensure your safety first\n2. Call emergency services if needed\n3. Provide first aid if trained\n4. Stay calm and follow emergency protocols\n\nFor specific medical emergencies, always consult with emergency services immediately.`;
+    return `Emergency guidance for: ${situation}\n\n1. Ensure your safety first\n2. Contact emergency services if needed\n3. Provide first aid if trained\n4. Stay calm and follow emergency protocols\n\nFor specific medical emergencies, always consult with emergency services immediately.`;
   }
 }
 
