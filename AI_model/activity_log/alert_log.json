@@ -1,0 +1,45 @@
+[
+    {
+        "date": "2025-07-03",
+        "time": "10:09:02",
+        "notification": "Notification sent to all emergency services - hospital, police_station, fire_station",
+        "severity": "Minor",
+        "counts": {
+            "healthy_person": 4,
+            "damaged_car": 1,
+            "injured_person": 1
+        }
+    },
+    {
+        "date": "2025-07-03",
+        "time": "10:10:52",
+        "notification": "Notification sent to all emergency services - hospital, police_station, fire_station",
+        "severity": "Moderate",
+        "counts": {
+            "damaged_car": 2,
+            "injured_person": 2,
+            "healthy_person": 2,
+            "fire": 1
+        }
+    },
+    {
+        "date": "2025-07-03",
+        "time": "11:09:18",
+        "notification": "Notification sent to all emergency services - hospital, police_station, fire_station",
+        "severity": "Severe",
+        "counts": {
+            "injured_person": 2,
+            "damaged_car": 1,
+            "smoke": 1,
+            "fire": 1,
+            "healthy_person": 1
+        }
+    },
+    {
+        "date": "2025-07-03",
+        "time": "12:09:29",
+        "notification": "Notification sent to all emergency services - hospital, police_station, fire_station",
+        "severity": "Minor",
+        "counts": {}
+    }
+]
