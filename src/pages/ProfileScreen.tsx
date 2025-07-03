@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, User, Phone, Heart, Shield, Bell, LogOut, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, Plus, User, Phone, Heart, Shield, Bell, LogOut, Moon, Sun, Edit2, Save, X } from 'lucide-react';
 import AnimatedContainer from '@/components/AnimatedContainer';
 import EmergencyContact from '@/components/EmergencyContact';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,15 +24,29 @@ const ProfileScreen = () => {
   const { theme, toggleTheme } = useTheme();
   
   const [isAddingContact, setIsAddingContact] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [contactForm, setContactForm] = useState<ContactFormData>({
     name: '',
     phone: '',
     relationship: ''
   });
   
+  const [profileForm, setProfileForm] = useState({
+    name: user?.name || '',
+    phone: user?.phone || ''
+  });
+  
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setContactForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleProfileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setProfileForm(prev => ({
       ...prev,
       [name]: value
     }));
@@ -49,6 +63,37 @@ const ProfileScreen = () => {
     setContactForm({ name: '', phone: '', relationship: '' });
     setIsAddingContact(false);
     toast.success('Emergency contact added successfully');
+  };
+  
+  const handleSaveProfile = () => {
+    // Simple validation
+    if (!profileForm.name.trim()) {
+      toast.error('Name is required');
+      return;
+    }
+    
+    // In a real app, this would update the user profile via API
+    // For now, we'll just update localStorage and show success
+    const updatedUser = {
+      ...user,
+      name: profileForm.name.trim(),
+      phone: profileForm.phone.trim()
+    };
+    
+    localStorage.setItem('smartCrashUser', JSON.stringify(updatedUser));
+    setIsEditingProfile(false);
+    toast.success('Profile updated successfully');
+    
+    // Force a page refresh to update the user context
+    window.location.reload();
+  };
+  
+  const handleCancelEdit = () => {
+    setProfileForm({
+      name: user?.name || '',
+      phone: user?.phone || ''
+    });
+    setIsEditingProfile(false);
   };
   
   const handleDeleteContact = (id: string) => {
@@ -84,18 +129,84 @@ const ProfileScreen = () => {
       
       {/* User info */}
       <AnimatedContainer animation="fade-in" delay={100} className="mb-8">
-        <div className="flex items-center">
-          <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
-            <User className="h-8 w-8 text-primary" />
-          </div>
-          <div className="ml-4">
-            <h2 className="text-lg font-medium">{user?.name || 'User'}</h2>
-            <p className="text-muted-foreground">{user?.email || 'No email'}</p>
-            {user?.phone && (
-              <p className="text-sm text-muted-foreground">
-                {user.phone}
-              </p>
-            )}
+        <div className="bg-card border rounded-lg p-4">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="h-8 w-8 text-primary" />
+              </div>
+              <div className="ml-4 flex-1">
+                {isEditingProfile ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="profileName" className="text-sm font-medium">
+                        Name
+                      </label>
+                      <input
+                        type="text"
+                        id="profileName"
+                        name="name"
+                        value={profileForm.name}
+                        onChange={handleProfileInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Enter your name"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="profilePhone" className="text-sm font-medium">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        id="profilePhone"
+                        name="phone"
+                        value={profileForm.phone}
+                        onChange={handleProfileInputChange}
+                        className="w-full mt-1 px-3 py-2 border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                        placeholder="Enter your phone number"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <h2 className="text-lg font-medium">{user?.name || 'User'}</h2>
+                    <p className="text-muted-foreground">{user?.email || 'No email'}</p>
+                    {user?.phone && (
+                      <p className="text-sm text-muted-foreground flex items-center">
+                        <Phone className="h-3 w-3 mr-1" />
+                        {user.phone}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              {isEditingProfile ? (
+                <>
+                  <button
+                    onClick={handleSaveProfile}
+                    className="p-2 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors"
+                  >
+                    <Save className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={handleCancelEdit}
+                    className="p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsEditingProfile(true)}
+                  className="p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </AnimatedContainer>
