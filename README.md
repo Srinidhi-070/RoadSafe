@@ -1,7 +1,7 @@
 # 🚦 RoadSafe - AI-Powered Smart Road Accident Detection & Emergency Response System
 
 <p align="center">
-  <img src="2d635424-7b95-42ab-9770-2ac7fb0c5fb0.png" alt="RoadSafe Logo" width="140"/>
+  <img src="[2d635424-7b95-42ab-9770-2ac7fb0c5fb0.png](https://github.com/Srinidhi-070/RoadSafe/blob/main/public/lovable-uploads/babc7f96-a784-4583-bc62-5b6f7f92da8b.png?raw=true)" alt="RoadSafe Logo" width="140"/>
 </p>
 
 <p align="center">
