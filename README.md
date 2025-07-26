@@ -8,6 +8,11 @@
   <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=24&pause=1000&color=F763D7&center=true&vCenter=true&width=1000&lines=Empowering+Emergency+Response+with+AI;Real-time+Accident+Detection+and+Dispatch;Faster+Rescue+Means+More+Lives+Saved" alt="Typing SVG" />
 </p>
 
+<p align="center">
+  <a href="https://preview--smartcrashassist.lovable.app/home">
+    🔗 <strong>Live Demo</strong>
+  </a>
+</p>
 ---
 
 ## 🧠 What is RoadSafe?
