@@ -41,23 +41,26 @@ RoadSafe is a real-time AI-driven web and mobile-based platform designed to dete
 ## 📂 Project Structure
 ```
 
+📂 Project Structure
+
 RoadSafe/
 ├── public/
 │   ├── favicon.ico
 │   ├── placeholder.svg
-│   ├── robots.txt
+│   └── robots.txt
 ├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── pages/
-│   ├── services/
-│   ├── hooks/
-│   └── App.tsx
-├── README.md
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── tailwind.config.ts
+│   ├── assets/           # Static assets like images, icons, etc.
+│   ├── components/       # Reusable UI components
+│   ├── pages/            # Page-level React components
+│   ├── services/         # API service functions
+│   ├── hooks/            # Custom React hooks
+│   └── App.tsx           # Main application component
+├── README.md             # Project documentation
+├── package.json          # Project metadata and dependencies
+├── tsconfig.json         # TypeScript configuration
+├── vite.config.ts        # Vite build configuration
+└── tailwind.config.ts    # Tailwind CSS configuration
+
 
 ````
 
