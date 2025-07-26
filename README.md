@@ -1,6 +1,10 @@
 # 🚦 RoadSafe - AI-Powered Smart Road Accident Detection & Emergency Response System
 
 <p align="center">
+  <img src="2d635424-7b95-42ab-9770-2ac7fb0c5fb0.png" alt="RoadSafe Logo" width="140"/>
+</p>
+
+<p align="center">
   <img src="https://readme-typing-svg.herokuapp.com?font=Fira+Code&size=24&pause=1000&color=F763D7&center=true&vCenter=true&width=1000&lines=Empowering+Emergency+Response+with+AI;Real-time+Accident+Detection+and+Dispatch;Faster+Rescue+Means+More+Lives+Saved" alt="Typing SVG" />
 </p>
 
