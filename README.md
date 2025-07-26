@@ -1,4 +1,3 @@
-```markdown
 # 🚦 RoadSafe - AI-Powered Smart Road Accident Detection & Emergency Response System
 
 <p align="center">
@@ -138,4 +137,3 @@ Visit: [http://localhost:5173](http://localhost:5173)
 <p align="center">
   <strong>RoadSafe: Driving technology forward to protect what matters most — lives.</strong>  
 </p>
-```
